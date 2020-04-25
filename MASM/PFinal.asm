@@ -26,6 +26,12 @@ TReporte db "REPORTE PROYECTO FINAL",13,10,13,10
 PUBLIC Usuarios
 Usuarios	Usuario 20 DUP (<>)
 
+PUBLIC UAuxiliar
+UAuxiliar Usuario 1 DUP (<>)
+
+PUBLIC UsuariosAux
+UsuariosAux	Usuario 20 DUP (<>)
+
 ;**************************************************************************
 bufferEntrada db 50 dup('$'),00
 bufferAuxiliar db 50 dup('$'),00
@@ -37,16 +43,20 @@ bufferInformacion db 200 dup('$')
 bufferInfoAux db 200 dup('$')
 bufferFechaHora db 15 dup('$')
 NBytes WORD 0
-Num db 50 dup(00h)
 IDAux db 10 dup('$')
 TotalUsuarios WORD 0
 OffsetUsuario WORD 0
 UsuarioAux WORD 0
-Punteos WORD 25 dup (0)
+OFFSETAux WORD 0
+Punteos db 25 dup (0)
 intAux WORD 0
 intCont WORD 0
-ColumnaCarro WORD 54550
+NumeroAux WORD 0
+Contador1 WORD 0
+Contador2 WORD 0
+ColumnaCarro WORD 10101010b
 NumPrint db 100 dup('$')
+Num db 100 dup(00h)
 arregloID db 10 dup('$')
 arregloPASS db 10 dup('$')
 salto db " ",0ah,0dh,"$"
@@ -71,6 +81,7 @@ elegir db "Elija una opcion:","$"
 titulo_ingreso db "+++++++++++++++++ INICIAR SESION +++++++++++++++","$"
 titulo_admin db "+++++++++++++++++ BIENVENIDO ADMINISTRADOR +++++++++++++++","$"
 titulo_registro db "+++++++++++++++++ REGISTRAR NUEVO USUARIO +++++++++++++++","$"
+titulo_puntos db "+++++++++++++++++ REPORTE PUNTOS +++++++++++++++","$"
 simbolos_mas db "+++++++++++++++++","$"
 bienvenido_titulo db "Bienvenid@ ","$"
 ingrese_usuario db "Ingrese Username: ","$"
@@ -84,7 +95,11 @@ ReporteGenerado db "    Reporte generado con exito!",0ah,0dh,"$"
 int_invalido db "Intervalo invalido! Presione cualquier tecla para volver a intentar.",0ah,0dh,"$"
 formato_invalido db "Formato invalido! Presione cualquier tecla para volver a intentar.",0ah,0dh,"$"
 extension_invalida db "Extension invalida! Presione cualquier tecla para volver a intentar.",0ah,0dh,"$"
-espacio db "  ","$"
+espacio db "   ","$"
+tabulacion db "	","$"
+punto db ".","$"
+NoUsuarios db "No hay ningun usuario registrado. Presione cualquier tecla para continuar.",0ah,0dh,"$"
+columnas_puntos db "    Usuario		Nivel		Puntos","$"
 ;********************** SEGMENTO DE CODIGO *********************** 
 .code
 
@@ -94,17 +109,7 @@ mov ds,dx
 mov OffsetUsuario, offset Usuarios
 Inicio:
 
-
     Clear_Screen
-	InicioVideo
-	PintarFondo 15d
-	PintarCarro 10d
-
-	PausaSalir
-	RegresarATexto
-	jmp salir
-
-
 	print encabezado
     print elegir
 	print salto
@@ -153,8 +158,36 @@ SesionAdmin:
     print elegir
 	print salto
 	print Adminmenu
+	VerificarTecladoAdmin:
 	getCharSE
-	jmp Inicio
+	cmp al,31h			;1
+	je TOP_PUNTOS
+	cmp al,32h			;2
+    je TOP_TIEMPO
+    cmp al,33h			;3
+    je Inicio
+	jmp VerificarTecladoAdmin
+
+TOP_PUNTOS:
+Clear_Screen
+print titulo_puntos
+print salto
+print salto
+DuplicarUsuarios
+ImprimirPuntuaciones
+LeerBarra:
+getCharSE
+cmp al,20h ;Barra Espaciadora
+je ReporteGrafico
+jmp LeerBarra
+ReporteGrafico:
+InicioVideo
+PausaSalir
+RegresarATexto
+jmp SesionAdmin
+
+TOP_TIEMPO:
+jmp SesionAdmin
 
 IngresoUsuario:
 	LoggearUsuario
@@ -174,6 +207,7 @@ IngresoUsuario:
     print elegir
 	print salto
 	print Usermenu
+	VerificarTeclado:
 	getCharSE
 	cmp al,31h			;1
 	je INICIAR_JUEGO
@@ -181,11 +215,11 @@ IngresoUsuario:
     je CARGAR_JUEGO
     cmp al,33h			;3
     je Inicio
-	jmp Inicio_Usuario
+	jmp VerificarTeclado
 
 INICIAR_JUEGO:
 InicioVideo
-PintarFondo 15
+Juego
 PausaSalir
 RegresarATexto
 jmp Inicio_Usuario
@@ -208,6 +242,7 @@ OPCION2: ;REGISTRAR
 	ObtenerTexto arregloPASS
 	mov di,OffsetUsuario
 	mov [di].Usuario.Punteo,0
+	mov [di].Usuario.Nivel,1
 	xor bx,bx
 	Copiar:
 	mov al,arregloID[bx]
@@ -267,6 +302,138 @@ salir:
 	int 21h 				
 
 main endp 	
+
+ConvertirNum proc
+            push bp                    ;almacenamos el puntero base
+            mov  bp,sp                 ;ebp contiene la direccion de esp
+            sub  sp,2                  ;se guarda espacio para dos variables
+            mov word ptr[bp-2],0       ;var local =0 
+            pusha
+            LimpiarBuffer Num, SIZEOF Num, 00h
+            xor si,si                          ;si=0
+            cmp ax,0                           ;si ax, ya viene con un cero
+            je casoMinimo           
+            mov  bx,0                          ;denota el fin de la cadena
+            push bx                            ;se pone en la pila el fin de cadena
+            Bucle:  
+                mov dx,0
+                cmp ax,0                    ;¿AX= 0?
+                je toNum                    ;si:enviar numero al arreglo                
+                mov bx,10                   ;divisor  = 10
+                div bx                      ;ax =cociente ,dx= residuo
+                add dx,48d                   ;residuo +48 para  poner el numero en ascii
+                push dx                     ;lo metemos en la pila 
+                jmp Bucle
+            toNum:
+                pop bx                      ;obtenemos elemento de la pila
+                mov word ptr[bp-2],bx       ; pasamos de 16 bits a 8 bits 
+                mov al, byte ptr[bp-2]
+                cmp al,0                    ;¿Fin de Numero?
+                je FIN                      ;si: enviar al fin del procedimiento
+                mov num[si],al              ;ponemos el numero en ascii en la cadena
+                inc si                      ;incrementamos los valores               
+                jmp toNum                   ;iteramos de nuevo            
+            casoMinimo:
+                add al,48d                         ;convertimos 0 ascii
+                mov Num[si],al                     ;Lo pasamos a num
+                jmp FIN
+            FIN:
+                popa
+                mov sp,bp               ;esp vuelve apuntar al inicio y elimina las variables locales
+                pop bp                  ;restaura el valor del puntro base listo para el ret
+                ret 
+    ConvertirNum endp
+
+ConvertirPrint proc
+            push bp                   
+            mov  bp,sp                
+            sub  sp,2                 
+            mov word ptr[bp-2],0      
+            pusha
+            LimpiarBuffer NumPrint, SIZEOF NumPrint, 24h
+            xor si,si                        
+            cmp ax,0                        
+            je casoMinimo2         
+            mov  bx,0                       
+            push bx                          
+            Bucle2:  
+                mov dx,0
+                cmp ax,0                   
+                je toNum2                                
+                mov bx,10               
+                div bx                    
+                add dx,48d                
+                push dx                    
+                jmp Bucle2
+            toNum2:
+                pop bx                   
+                mov word ptr[bp-2],bx    
+                mov al, byte ptr[bp-2]
+                cmp al,0                   
+                je FIN2                  
+                mov NumPrint[si],al          
+                inc si                            
+                jmp toNum2                 
+            casoMinimo2:
+                add al,48d                     
+                mov NumPrint[si],al                
+                jmp FIN2
+            FIN2:
+                popa
+                mov sp,bp           
+                pop bp                
+                ret 
+    ConvertirPrint endp
+
+	Random proc 
+        ;--------------------------------------------------------------------
+        ;   Recibe:       [bp+4] Limite Superior                    
+        ;                                                                    
+        ;   Devuelve:    AX = Numero ramdon del uno al LimiteSuperior (Max. 255)         
+        ;                                                                    
+        ;   Comentarios: Obtiene la hora del sistema                         
+        ;--------------------------------------------------------------------
+
+        ;ini Subrutina proglogo
+            push bp                    ;almacenamos el puntero base
+            mov  bp,sp                 ;ebp contiene la direccion de esp
+            sub  sp,2                  ;se guarda espacio para dos variables
+            mov word ptr[bp-2],0       ;var local =0
+            push dx
+            push bx
+        ;fin Subrutina prologo
+
+        ;Ini Codigo--
+  
+            mov ah,2ch                  ;funcion de la hora
+            int 21h                     ;llamada a ms-dos
+
+            mov byte ptr[bp-2],dl       ;DL = Segundos(No son precisas)    
+            mov ax,word ptr[bp-2]       ;diviendo = Centesimas
+            mov bl,byte ptr[bp+4]       ;divisor  = 10
+            div bl                      ;al=cociente, ah= residuo
+
+
+            add ah,1                    ;mod %10 +1
+            
+            mov byte ptr[bp-2],ah
+            mov ax,word ptr[bp-2]
+        ;Fin Codigo--
+
+
+        ;ini Subrutina epilogo
+            FIN:
+                push bx
+                push dx 
+                mov sp,bp               ;esp vuelve apuntar al inicio y elimina las variables locales
+                pop bp                  ;restaura el valor del puntro base listo para el ret
+                ret 2                   ; vaciamos los parametros de entrada
+            ;fin etiqueta
+        ;fin Subrutna epilogo
+    Random endp
+
+
+
 
 end main
 
