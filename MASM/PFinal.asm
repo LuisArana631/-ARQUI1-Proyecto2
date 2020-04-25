@@ -10,9 +10,7 @@ include Usuario.inc
 .stack 100h
 ;********************** SEGMENTO DE DATO ***********************
 .data
-;-----------------------------------------------------------------
-
-
+;---------------------------CADENAS PARA REPORTE-------------------------
 EncabezadoReporte db "UNIVERSIDAD DE SAN CARLOS DE GUATEMALA",13,10,
                     "FACULTAD DE INGENIERIA",13,10,
                     "ESCUELA DE CIENCIAS Y SISTEMAS",13,10,
@@ -21,8 +19,14 @@ EncabezadoReporte db "UNIVERSIDAD DE SAN CARLOS DE GUATEMALA",13,10,
                     "OSCAR ALFREDO LLAMAS LEMUS",13,10,
                     "201602625",13,10,13,10
 
+RSalto db " ",13,10
+RTabulacion db "        "
+R_TPuntos db "+++++++++++++++ TOP 10 PUNTOS +++++++++++++++",13,10,13,10
+Rcolumnas_puntos db "    Usuario        Nivel       Puntos",13,10,13,10
 TReporte db "REPORTE PROYECTO FINAL",13,10,13,10 
-
+REspacio db "  "
+RPunto db "."
+;------------------------------------------------------------------
 PUBLIC Usuarios
 Usuarios	Usuario 20 DUP (<>)
 
@@ -37,13 +41,14 @@ bufferEntrada db 50 dup('$'),00
 bufferAuxiliar db 50 dup('$'),00
 bufferAuxiliar2 db 50 dup('$'),00
 handlerEntrada dw ?
-bufferReporte db "Puntos.rep",00h
-handlerReporte dw ?
+bufferPuntos db "Puntos.rep",00h
+handlerPuntos dw ?
 bufferInformacion db 200 dup('$')
 bufferInfoAux db 200 dup('$')
 bufferFechaHora db 15 dup('$')
 NBytes WORD 0
 IDAux db 10 dup('$')
+IDAuxFile db 10 dup(00h)
 TotalUsuarios WORD 0
 OffsetUsuario WORD 0
 UsuarioAux WORD 0
@@ -54,6 +59,7 @@ intCont WORD 0
 NumeroAux WORD 0
 Contador1 WORD 0
 Contador2 WORD 0
+StringSize WORD 0
 ColumnaCarro WORD 10101010b
 NumPrint db 100 dup('$')
 Num db 100 dup(00h)
@@ -270,7 +276,7 @@ Error_Crear:
 	print salto
 	print errorCrear
 	getCharSE
-	jmp Inicio
+	jmp SesionAdmin
 
 Error_Escritura:
 	print salto

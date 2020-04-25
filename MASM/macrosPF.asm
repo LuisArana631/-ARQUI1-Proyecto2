@@ -401,6 +401,34 @@ FIN:
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% REEMPLAZAR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Reemplazar macro arreglo, char1, char2, inicio, fin
+LOCAL SeguirReemplazando, HacerReemplazo, Incremento
+xor dx,dx
+mov dl,char1
+xor ax,ax
+mov al,char2
+xor di,di
+mov di,inicio
+SeguirReemplazando:
+mov ah,arreglo[di]
+cmp ah,dl
+je HacerReemplazo
+jmp Incremento
+HacerReemplazo:
+mov arreglo[di],00h
+Incremento:
+inc di
+mov cx,fin
+cmp di, cx
+jb SeguirReemplazando
+endm
+
+
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% INICIAR MODO VIDEO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -486,6 +514,27 @@ inc di
 cmp si,cx
 jb Copiar
 endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% COPIAR ARREGLO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+CopiarArregloFile macro BufferFuente, BufferDestino, Start, Finish
+LOCAL Copiar
+LimpiarBuffer BufferDestino, SIZEOF BufferDestino,00h
+mov si, Start
+mov cx,Finish
+xor di,di
+Copiar:
+mov al,BufferFuente[si]
+mov BufferDestino[di],al
+inc si
+inc di
+cmp si,cx
+jb Copiar
+endm
+
+
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LOGGEAR USUARIO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -723,7 +772,7 @@ endm
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ImprimirPuntuaciones macro
-LOCAL Imprimir, SeguirCopiando, OrdenarAntes, SeguirImpresion
+LOCAL Imprimir, SeguirCopiando, OrdenarAntes, SeguirImpresion, SegundaValidacion
 mov dx,TotalUsuarios
 cmp dx,0
 ja Imprimir
@@ -773,7 +822,13 @@ mov OFFSETAux,bx
 inc intCont
 mov cx,intCont
 cmp cx,TotalUsuarios
+jbe SegundaValidacion
+jmp SalirImp
+SegundaValidacion:
+cmp cx,10
 jbe SeguirImprimiendo
+SalirImp:
+ReportePuntos
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -929,4 +984,64 @@ dec Contador1
 mov cx,Contador1
 cmp cx,0
 ja PrimerFor
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CREAR REPORTE PUNTOS %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ReportePuntos macro
+LOCAL SeguirImprimiendo, SegundaValidacion, SalirRPuntos, Copiar, OrdenarAntes
+	CrearArchivo bufferPuntos, handlerPuntos
+	EscribirArchivo handlerPuntos, EncabezadoReporte, SIZEOF EncabezadoReporte
+	EscribirArchivo handlerPuntos, TReporte, SIZEOF TReporte
+	EscribirArchivo handlerPuntos, R_TPuntos, SIZEOF R_TPuntos
+	EscribirArchivo handlerPuntos, Rcolumnas_puntos, SIZEOF Rcolumnas_puntos
+	mov intCont,1
+	mov bx,offset UsuariosAux
+	mov OFFSETAux,bx
+	SeguirImprimiendo:
+		DecToFile intCont
+		EscribirArchivo handlerPuntos, REspacio, SIZEOF REspacio
+		getSize Num, 00h, SIZEOF Num
+		mov StringSize,si
+		EscribirArchivo handlerPuntos, Num, StringSize
+		EscribirArchivo handlerPuntos, RPunto, SIZEOF RPunto
+		EscribirArchivo handlerPuntos, REspacio, SIZEOF REspacio
+		mov bx,OFFSETAux
+		CopiarArreglo [bx].Usuario.Username, IDAux, 0, 10
+	 	Reemplazar IDAux, 24h,20h,0, SIZEOF IDAux
+		EscribirArchivo handlerPuntos, IDAux, SIZEOF IDAux
+		EscribirArchivo handlerPuntos, RTabulacion, SIZEOF RTabulacion
+		mov bx,OFFSETAux
+		xor ax,ax
+		mov al,[bx].Usuario.Nivel
+		mov NumeroAux,ax
+		DecToFile NumeroAux
+		getSize Num, 00h, SIZEOF Num
+		mov StringSize,si
+		EscribirArchivo handlerPuntos, Num, StringSize
+		EscribirArchivo handlerPuntos, RTabulacion, SIZEOF RTabulacion
+		mov bx,OFFSETAux
+		xor ax,ax
+		mov al,[bx].Usuario.Punteo
+		mov NumeroAux,ax
+		DecToFile NumeroAux
+		getSize Num, 00h, SIZEOF Num
+		mov StringSize,si
+		EscribirArchivo handlerPuntos, Num, StringSize
+		EscribirArchivo handlerPuntos, RSalto, SIZEOF RSalto
+	mov bx,OFFSETAux	
+	add bx,SIZEOF Usuario
+	mov OFFSETAux,bx
+	inc intCont
+	mov cx,intCont
+	cmp cx,TotalUsuarios
+	jbe SegundaValidacion
+	jmp SalirRPuntos
+	SegundaValidacion:
+	cmp cx,10
+	jbe SeguirImprimiendo
+	SalirRPuntos:
+	CerrarArchivo handlerPuntos
 endm
