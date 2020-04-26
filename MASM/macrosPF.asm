@@ -1045,3 +1045,124 @@ LOCAL SeguirImprimiendo, SegundaValidacion, SalirRPuntos, Copiar, OrdenarAntes
 	SalirRPuntos:
 	CerrarArchivo handlerPuntos
 endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SETEAR VELOCIDAD %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+SetearVelocidad macro
+LOCAL AsignacionV, Asignar0, Asignar1, Asignar2, Asignar3, Asignar4, Asignar5, Asignar6, Asignar7, Asignar8, Asignar9, Fin
+AsignacionV:
+clear_Screen
+print titulo_velocidad
+print salto
+print salto
+print ingreseVelocidad
+getChar
+	cmp al,30h			;0
+	je Asignar0
+	cmp al,31h			;1
+	je Asignar1
+	cmp al,32h			;2
+    je Asignar2
+	cmp al,33h			;3
+	je Asignar3
+	cmp al,34h			;4
+    je Asignar4
+    cmp al,35h			;5
+	je Asignar5
+	cmp al,36h			;6
+    je Asignar6
+	cmp al,37h			;7
+    je Asignar7
+	cmp al,38h			;8
+    je Asignar8
+	cmp al,39h			;9
+    je Asignar9
+	print salto
+	print salto
+	print valor_invalido
+	getCharSE
+	jmp AsignacionV
+
+Asignar0:
+	mov Velocidad,0
+	print salto
+	print salto
+	print  asigTerminada
+	getCharSE
+	jmp Fin
+
+Asignar1:
+	mov Velocidad,1
+	print salto
+	print salto
+	print  asigTerminada
+	getCharSE
+	jmp Fin
+
+Asignar2:
+	mov Velocidad,2
+	print salto
+	print salto
+	print  asigTerminada
+	getCharSE
+	jmp Fin
+
+Asignar3:
+	mov Velocidad,3
+	print salto
+	print salto
+	print  asigTerminada
+	getCharSE
+	jmp Fin
+
+Asignar4:
+	mov Velocidad,4
+	print salto
+	print salto
+	print  asigTerminada
+	getCharSE
+	jmp Fin
+
+Asignar5:
+	mov Velocidad,5
+	print salto
+	print salto
+	print  asigTerminada
+	getCharSE
+	jmp Fin
+
+Asignar6:
+	mov Velocidad,6
+	print salto
+	print salto
+	print  asigTerminada
+	getCharSE
+	jmp Fin
+
+Asignar7:
+	mov Velocidad,7
+	print salto
+	print salto
+	print  asigTerminada
+	getCharSE
+	jmp Fin
+
+Asignar8:
+	mov Velocidad,8
+	print salto
+	print salto
+	print  asigTerminada
+	getCharSE
+	jmp Fin
+
+Asignar9:
+	mov Velocidad,9
+	print salto
+	print salto
+	print  asigTerminada
+	getCharSE
+
+Fin:
+endm

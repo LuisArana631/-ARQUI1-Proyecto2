@@ -60,7 +60,9 @@ NumeroAux WORD 0
 Contador1 WORD 0
 Contador2 WORD 0
 StringSize WORD 0
+Velocidad WORD 0
 ColumnaCarro WORD 10101010b
+TipoOrdenamiento WORD 1 ; 1 = Burbuja/ 2 = Quicksort/ 3 = Shellsort
 NumPrint db 100 dup('$')
 Num db 100 dup(00h)
 arregloID db 10 dup('$')
@@ -82,12 +84,19 @@ encabezado db "	UNIVERSIDAD DE SAN CARLOS DE GUATEMALA",0ah,0dh,"	FACULTAD DE IN
 menu db "	1) Ingresar",0ah,0dh,"	2) Registrar",0ah,0dh,"	3) Salir",0ah,0dh,"$"
 Usermenu db "	1) Iniciar Juego",0ah,0dh,"	2) Cargar Juego",0ah,0dh,"	3) Salir",0ah,0dh,"$"
 Adminmenu db "	1) Top 10 puntos",0ah,0dh,"	2) Top 10 tiempo",0ah,0dh,"	3) Salir",0ah,0dh,"$"
+Tipomenu db "  1) Ordenamiento BubbleSort Ascendente",0ah,0dh,"  2) Ordenamiento BubbleSort Descendente",0ah,0dh,
+            "  3) Ordenamiento QuickSort Ascendente",0ah,0dh,"  4) Ordenamiento QuickSort Descendente",0ah,0dh,
+            "  5) Ordenamiento ShellSort Ascendente",0ah,0dh,"  6) Ordenamiento ShellSort Descendente",0ah,0dh,
+				"  7) Regresar",0ah,0dh,"$"
 flecha db "	>>","$"
 elegir db "Elija una opcion:","$"
+ingreseVelocidad db "Ingrese un valor de velocidad [0,9]: ","$"
 titulo_ingreso db "+++++++++++++++++ INICIAR SESION +++++++++++++++","$"
 titulo_admin db "+++++++++++++++++ BIENVENIDO ADMINISTRADOR +++++++++++++++","$"
 titulo_registro db "+++++++++++++++++ REGISTRAR NUEVO USUARIO +++++++++++++++","$"
 titulo_puntos db "+++++++++++++++++ REPORTE PUNTOS +++++++++++++++","$"
+titulo_tipo db "+++++++++++++++++ TIPO DE ORDENAMIENTO +++++++++++++++","$"
+titulo_velocidad db "+++++++++++++++++ VALOR DE VELOCIDAD +++++++++++++++","$"
 simbolos_mas db "+++++++++++++++++","$"
 bienvenido_titulo db "Bienvenid@ ","$"
 ingrese_usuario db "Ingrese Username: ","$"
@@ -97,8 +106,9 @@ asigTerminada db "  Asignacion exitosa. Presione cualquier tecla para continuar.
 errorIngreso db "Datos invalidos o usuario inexistente. Presione cualquier tecla para continuar.","$"
 regExitoso db "Registro exitoso! Presione cualquier tecla para continuar.","$"
 PresioneContinuar db "  Presione cualquier tecla para continuar.","$"
+PresioneBarra db "  Presione la barra espaciadora para continuar.","$"
 ReporteGenerado db "    Reporte generado con exito!",0ah,0dh,"$"
-int_invalido db "Intervalo invalido! Presione cualquier tecla para volver a intentar.",0ah,0dh,"$"
+valor_invalido db "Valor invalido! Presione cualquier tecla para volver a intentar.",0ah,0dh,"$"
 formato_invalido db "Formato invalido! Presione cualquier tecla para volver a intentar.",0ah,0dh,"$"
 extension_invalida db "Extension invalida! Presione cualquier tecla para volver a intentar.",0ah,0dh,"$"
 espacio db "   ","$"
@@ -175,25 +185,92 @@ SesionAdmin:
 	jmp VerificarTecladoAdmin
 
 TOP_PUNTOS:
-Clear_Screen
-print titulo_puntos
-print salto
-print salto
-DuplicarUsuarios
-ImprimirPuntuaciones
-LeerBarra:
-getCharSE
-cmp al,20h ;Barra Espaciadora
-je ReporteGrafico
-jmp LeerBarra
-ReporteGrafico:
-InicioVideo
-PausaSalir
-RegresarATexto
-jmp SesionAdmin
+    Clear_Screen
+    print titulo_puntos
+    print salto
+    print salto
+    DuplicarUsuarios
+    ImprimirPuntuaciones
+    print salto
+    print PresioneBarra
+    LeerBarra:
+    getCharSE
+    cmp al,20h ;Barra Espaciadora
+    je ElegirOrdenamiento
+    jmp LeerBarra
+
+ElegirOrdenamiento:
+    Clear_Screen
+    print titulo_tipo
+    print salto
+    print salto
+    print elegir
+    print salto
+    print salto
+    print Tipomenu
+    VerificarTipo:
+	getCharSE
+	cmp al,31h			;1
+	je BurbujaAscendente
+	cmp al,32h			;2
+    je BurbujaDescendente
+	cmp al,33h			;3
+	je QuickAscendente
+	cmp al,34h			;4
+    je QuickDescendente
+    cmp al,35h			;5
+	je ShellAscendente
+	cmp al,36h			;6
+    je ShellDescendente
+	cmp al,37h			;7
+    je SesionAdmin
+	jmp VerificarTipo
+
+BurbujaAscendente:
+    SetearVelocidad
+    InicioVideo
+    PausaSalir
+    RegresarATexto
+    jmp SesionAdmin
+
+BurbujaDescendente:
+    SetearVelocidad
+    InicioVideo
+    PausaSalir
+    RegresarATexto
+    jmp SesionAdmin
+
+QuickAscendente:
+    SetearVelocidad
+    InicioVideo
+    PausaSalir
+    RegresarATexto
+    jmp SesionAdmin
+
+QuickDescendente:
+    SetearVelocidad
+    InicioVideo
+    PausaSalir
+    RegresarATexto
+    jmp SesionAdmin
+
+ShellAscendente:
+    SetearVelocidad
+    InicioVideo
+    PausaSalir
+    RegresarATexto
+    jmp SesionAdmin
+
+ShellDescendente:
+    SetearVelocidad
+    InicioVideo
+    PausaSalir
+    RegresarATexto
+    jmp SesionAdmin
+
 
 TOP_TIEMPO:
-jmp SesionAdmin
+    jmp SesionAdmin
 
 IngresoUsuario:
 	LoggearUsuario
