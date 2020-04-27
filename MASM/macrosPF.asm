@@ -32,6 +32,27 @@ pop si
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  SONIDO  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Sonido macro Hz
+mov al, 86h
+out 43h, al
+mov ax, Hz
+out 42h, al
+mov al, ah
+out 42h, al
+in al, 61h
+or al, 00000011b
+out 61h, al
+Delay 1200
+in al, 61h
+and al, 11111100b
+out 61h, al
+endm
+
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%    OBTENER FECHA Y HORA     %%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ObtenerFechaHora macro bufferFecha
@@ -423,7 +444,7 @@ FIN:
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% REEMPLAZAR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% REEMPLAZAR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Reemplazar macro arreglo, char1, char2, inicio, fin
@@ -484,7 +505,7 @@ endm
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 PausaSalir macro
-mov ah,10h
+mov ah,00h
 int 16h
 endm
 
@@ -807,6 +828,10 @@ Imprimir:
 mov dx,TotalUsuarios
 cmp dx,1
 ja OrdenarAntes
+xor dx,dx
+mov bx,offset UsuariosAux
+mov dl,[bx].Usuario.Punteo
+mov PuntajeMax,dx
 jmp SeguirImpresion
 OrdenarAntes:
 OrdenarUsuariosPunteo
@@ -1200,10 +1225,10 @@ endm
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 SetearDelay macro
-mov ax,10100101101b
+mov ax,1111101000b
 mov bx,Velocidad
 mul bx
-add ax,10100101101b
+add ax,1111101000b
 mov ValorDelay,ax
 endm
 
@@ -1217,7 +1242,7 @@ dec ax
 mov bx,5
 mul bx
 mov bx,ax
-mov ax,100101100b
+mov ax,100101011b ;299
 sub ax,bx
 xor dx,dx
 mov bx,TotalUsuarios
@@ -1240,37 +1265,119 @@ mov AlturaAux,ax
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ASIGNAR COLOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+AsignarColorYHz macro Puntaje
+LOCAL FinAsignacion, AsignarRojo, AsignarAzul, AsignarAmarillo, AsignarVerde
+mov ax,Puntaje
+cmp ax,20d
+jbe AsignarRojo
+cmp ax,40d
+jbe AsignarAzul
+cmp ax,60d
+jbe AsignarAmarillo
+cmp ax,80d
+jbe AsignarVerde
+mov ColorAux,15d ; Color Blanco
+mov HzAux,1207d
+jmp FinAsignacion
+AsignarRojo:
+	mov ColorAux,4d ;Color Rojo
+	mov HzAux,9121d
+	jmp FinAsignacion
+AsignarAzul:
+	mov ColorAux,1d ;Color Azul
+	mov HzAux,4063d
+	jmp FinAsignacion
+AsignarAmarillo:
+	mov ColorAux,14d ;Color Amarillo
+	mov HzAux,2280d
+	jmp FinAsignacion
+AsignarVerde:
+	mov ColorAux,2d ; Color Verde
+	mov HzAux,1715d
+FinAsignacion:
+endm
+
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PINTAR MARGEN %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 PintarMargen macro color
 LOCAL PrimerLinea, SegundaLinea, TerceraLinea, CuartaLinea
 mov dl,color
-mov di,8010 ;inicio en la columna 15
+mov di,8010 ;inicio en la columna 10
 mov cx,300
 PrimerLinea:
 mov es:[di],dl
 inc di
 Loop PrimerLinea
-mov di,60810 ;inicio en la columna 15
+mov di,61450 ;inicio en la columna 10
 mov cx,300
 SegundaLinea:
 mov es:[di],dl
 inc di
 Loop SegundaLinea
-mov di,8010 ;inicio en la columna 15
-mov cx,165
+mov di,8010 ;inicio en la columna 10
+mov cx,167
 TerceraLinea:
 mov es:[di],dl
 add di,320
 Loop TerceraLinea
-mov di,8310 ;inicio en la columna 15
-mov cx,165
+mov di,8310 ;inicio en la columna 10
+mov cx,168
 CuartaLinea:
 mov es:[di],dl
 add di,320
 Loop CuartaLinea
 endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PINTAR NUMEROS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+PintarNumeros macro buffer
+LOCAL SeguirImpresion
+xor dx,dx
+mov ax,AnchoBarra
+mov bx,8d
+div bx
+mov Separacion,al ; x
+xor dx,dx
+xor ax,ax
+mov al,Separacion
+mov bx,2d
+div bx
+mov Separacion2,al ; x/2
+xor cx,cx
+mov cl,1d
+mov al,Separacion2
+add cl,al
+mov SeparacionAux,cl
+mov Contador1,0
+SeguirImpresion:
+mov dl, SeparacionAux; Column
+mov dh, 23 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+xor cx,cx
+mov si, Contador1
+mov cl,buffer[si]
+DecToPrint cx
+print NumPrint
+inc Contador1
+mov cl, SeparacionAux
+add cl,Separacion
+inc cl
+mov SeparacionAux,cl
+mov dx,Contador1
+cmp dx,TotalUsuarios
+jb SeguirImpresion
+endm
+
 
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1278,7 +1385,7 @@ endm
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 GraficarArreglo macro buffer, cadena
-LOCAL InicioGrafica
+LOCAL InicioGrafica, PrimerFor, SegundoFor
 SetearDelay
 SetearAncho
 InicioGrafica:
@@ -1287,5 +1394,41 @@ print TVelocidad
 DecToPrint Velocidad
 print NumPrint
 print salto
+PintarNumeros buffer
 PintarMargen 15d
+mov Contador1,0
+mov InicioBarra,57611d
+SeguirGraficando:
+xor cx,cx
+mov si,Contador1
+mov cl,buffer[si]
+AsignarAltura cx
+AsignarColorYHz cx
+mov dl, ColorAux
+mov bx,InicioBarra
+mov cx,0
+SegundoFor:
+mov di,bx
+xor si,si
+PrimerFor:
+mov es:[di],dl
+inc di
+inc si
+cmp si,AnchoBarra
+jne PrimerFor
+sub bx,320
+inc cx
+cmp cx,AlturaAux
+jbe SegundoFor
+Sonido HzAux
+Delay ValorDelay
+mov ax,InicioBarra
+mov bx,AnchoBarra
+add ax,bx ;Sumamos el ancho de la barra graficada anteriormente
+add ax,5 ;Sumamos 5 pixeles para separar la siguiente barra
+mov InicioBarra,ax
+inc Contador1
+mov dx,Contador1
+cmp dx,TotalUsuarios
+jb SeguirGraficando
 endm

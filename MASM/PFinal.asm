@@ -68,6 +68,12 @@ AnchoBarra WORD 10
 AlturaMax WORD 150
 AlturaAux WORD 0
 PuntajeMax WORD 0
+ColorAux db 15d
+HzAux WORD 100d
+InicioBarra WORD 0
+Separacion db 0
+Separacion2 db 0
+SeparacionAux db 0
 NumPrint db 100 dup('$')
 Num db 100 dup(00h)
 arregloID db 10 dup('$')
@@ -119,7 +125,7 @@ extension_invalida db "Extension invalida! Presione cualquier tecla para volver 
 espacio db "   ","$"
 tabulacion db "	","$"
 punto db ".","$"
-TPuntos db "Grafica: Puntuaciones   ","$"
+TPuntos db "Grafica: Puntuaciones       ","$"
 TVelocidad db "Velocidad: ","$"
 NoUsuarios db "No hay ningun usuario registrado. Presione cualquier tecla para continuar.",0ah,0dh,"$"
 columnas_puntos db "    Usuario		Nivel		Puntos","$"
@@ -133,7 +139,7 @@ mov OffsetUsuario, offset Usuarios
 
 Inicio:
     Clear_Screen
-	print encabezado
+    print encabezado
     print elegir
 	print salto
 
