@@ -61,8 +61,13 @@ Contador1 WORD 0
 Contador2 WORD 0
 StringSize WORD 0
 Velocidad WORD 0
+Segundos WORD 0
+ValorDelay WORD 10100101101b
 ColumnaCarro WORD 10101010b
-TipoOrdenamiento WORD 1 ; 1 = Burbuja/ 2 = Quicksort/ 3 = Shellsort
+AnchoBarra WORD 10
+AlturaMax WORD 150
+AlturaAux WORD 0
+PuntajeMax WORD 0
 NumPrint db 100 dup('$')
 Num db 100 dup(00h)
 arregloID db 10 dup('$')
@@ -114,6 +119,8 @@ extension_invalida db "Extension invalida! Presione cualquier tecla para volver 
 espacio db "   ","$"
 tabulacion db "	","$"
 punto db ".","$"
+TPuntos db "Grafica: Puntuaciones   ","$"
+TVelocidad db "Velocidad: ","$"
 NoUsuarios db "No hay ningun usuario registrado. Presione cualquier tecla para continuar.",0ah,0dh,"$"
 columnas_puntos db "    Usuario		Nivel		Puntos","$"
 ;********************** SEGMENTO DE CODIGO *********************** 
@@ -123,8 +130,8 @@ main proc
 mov dx,@data
 mov ds,dx
 mov OffsetUsuario, offset Usuarios
-Inicio:
 
+Inicio:
     Clear_Screen
 	print encabezado
     print elegir
@@ -228,7 +235,9 @@ ElegirOrdenamiento:
 
 BurbujaAscendente:
     SetearVelocidad
-    InicioVideo
+    InicioVideo 
+    ObtenerPuntuaciones
+    GraficarArreglo Punteos, TPuntos   
     PausaSalir
     RegresarATexto
     jmp SesionAdmin
@@ -514,8 +523,6 @@ ConvertirPrint proc
             ;fin etiqueta
         ;fin Subrutna epilogo
     Random endp
-
-
 
 
 end main

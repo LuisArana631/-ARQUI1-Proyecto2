@@ -10,6 +10,28 @@ endm
 
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  DELAY  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Delay macro constante
+LOCAL D1,D2,Fin
+push si
+push di
+mov si,constante
+D1:
+dec si
+jz Fin
+mov di,constante
+D2:
+dec di
+jnz D2
+jmp D1
+Fin:
+pop di
+pop si
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%    OBTENER FECHA Y HORA     %%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ObtenerFechaHora macro bufferFecha
@@ -439,6 +461,8 @@ mov ax, 0A000h
 mov es, ax  ; es = A000h (memoria de graficos).
 endm
 
+
+
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% DIBUJAR UN PIXEL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -632,7 +656,7 @@ endm
 PintarFondo macro color
 LOCAL PrimerFor, SegundoFor
 mov dl,color
-mov cx,8000
+mov cx,0
 mov bx,0
 SegundoFor:
 mov di,cx
@@ -984,6 +1008,10 @@ dec Contador1
 mov cx,Contador1
 cmp cx,0
 ja PrimerFor
+xor dx,dx
+mov bx,offset UsuariosAux
+mov dl,[bx].Usuario.Punteo
+mov PuntajeMax,dx
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1110,7 +1138,7 @@ Asignar2:
 	jmp Fin
 
 Asignar3:
-	mov Velocidad,3
+	mov Velocidad,3	
 	print salto
 	print salto
 	print  asigTerminada
@@ -1165,4 +1193,99 @@ Asignar9:
 	getCharSE
 
 Fin:
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SETEAR DELAY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+SetearDelay macro
+mov ax,10100101101b
+mov bx,Velocidad
+mul bx
+add ax,10100101101b
+mov ValorDelay,ax
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SETEAR ANCHO DE BARRA %%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+SetearAncho macro
+mov ax,TotalUsuarios
+dec ax
+mov bx,5
+mul bx
+mov bx,ax
+mov ax,100101100b
+sub ax,bx
+xor dx,dx
+mov bx,TotalUsuarios
+div bx
+mov AnchoBarra,ax
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ASIGNAR ALTURA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+AsignarAltura macro Puntaje
+mov ax,Puntaje
+mov bx,AlturaMax
+mul bx
+xor dx,dx
+mov bx,PuntajeMax
+div bx
+mov AlturaAux,ax
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PINTAR MARGEN %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+PintarMargen macro color
+LOCAL PrimerLinea, SegundaLinea, TerceraLinea, CuartaLinea
+mov dl,color
+mov di,8010 ;inicio en la columna 15
+mov cx,300
+PrimerLinea:
+mov es:[di],dl
+inc di
+Loop PrimerLinea
+mov di,60810 ;inicio en la columna 15
+mov cx,300
+SegundaLinea:
+mov es:[di],dl
+inc di
+Loop SegundaLinea
+mov di,8010 ;inicio en la columna 15
+mov cx,165
+TerceraLinea:
+mov es:[di],dl
+add di,320
+Loop TerceraLinea
+mov di,8310 ;inicio en la columna 15
+mov cx,165
+CuartaLinea:
+mov es:[di],dl
+add di,320
+Loop CuartaLinea
+endm
+
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% GRAFICAR ARREGLO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+GraficarArreglo macro buffer, cadena
+LOCAL InicioGrafica
+SetearDelay
+SetearAncho
+InicioGrafica:
+print cadena
+print TVelocidad
+DecToPrint Velocidad
+print NumPrint
+print salto
+PintarMargen 15d
 endm
