@@ -22,7 +22,9 @@ EncabezadoReporte db "UNIVERSIDAD DE SAN CARLOS DE GUATEMALA",13,10,
 RSalto db " ",13,10
 RTabulacion db "        "
 R_TPuntos db "+++++++++++++++ TOP 10 PUNTOS +++++++++++++++",13,10,13,10
+R_TTiempo db "+++++++++++++++ TOP 10 TIEMPO +++++++++++++++",13,10,13,10
 Rcolumnas_puntos db "    Usuario        Nivel       Puntos",13,10,13,10
+Rcolumnas_tiempo db "    Usuario        Nivel       Tiempo",13,10,13,10
 TReporte db "REPORTE PROYECTO FINAL",13,10,13,10 
 REspacio db "  "
 RPunto db "."
@@ -43,6 +45,8 @@ bufferAuxiliar2 db 50 dup('$'),00
 handlerEntrada dw ?
 bufferPuntos db "Puntos.rep",00h
 handlerPuntos dw ?
+bufferTiempo db "Tiempo.rep",00h
+handlerTiempo dw ?
 bufferInformacion db 200 dup('$')
 bufferInfoAux db 200 dup('$')
 bufferFechaHora db 15 dup('$')
@@ -53,12 +57,15 @@ TotalUsuarios WORD 0
 OffsetUsuario WORD 0
 UsuarioAux WORD 0
 OFFSETAux WORD 0
-Punteos db 25 dup (0)
+Valores db 25 dup (0)
 intAux WORD 0
+AuxVar db 0
 intCont WORD 0
 NumeroAux WORD 0
 Contador1 WORD 0
 Contador2 WORD 0
+Contador3 WORD 0
+Contador4 WORD 0
 StringSize WORD 0
 Velocidad WORD 0
 Segundos WORD 0
@@ -67,7 +74,7 @@ ColumnaCarro WORD 10101010b
 AnchoBarra WORD 10
 AlturaMax WORD 150
 AlturaAux WORD 0
-PuntajeMax WORD 0
+ValorMax WORD 0
 ColorAux db 15d
 HzAux WORD 100d
 InicioBarra WORD 0
@@ -106,6 +113,7 @@ titulo_ingreso db "+++++++++++++++++ INICIAR SESION +++++++++++++++","$"
 titulo_admin db "+++++++++++++++++ BIENVENIDO ADMINISTRADOR +++++++++++++++","$"
 titulo_registro db "+++++++++++++++++ REGISTRAR NUEVO USUARIO +++++++++++++++","$"
 titulo_puntos db "+++++++++++++++++ REPORTE PUNTOS +++++++++++++++","$"
+titulo_tiempo db "+++++++++++++++++ REPORTE TIEMPO +++++++++++++++","$"
 titulo_tipo db "+++++++++++++++++ TIPO DE ORDENAMIENTO +++++++++++++++","$"
 titulo_velocidad db "+++++++++++++++++ VALOR DE VELOCIDAD +++++++++++++++","$"
 simbolos_mas db "+++++++++++++++++","$"
@@ -124,11 +132,15 @@ formato_invalido db "Formato invalido! Presione cualquier tecla para volver a in
 extension_invalida db "Extension invalida! Presione cualquier tecla para volver a intentar.",0ah,0dh,"$"
 espacio db "   ","$"
 tabulacion db "	","$"
+SPVar db " ","$"
 punto db ".","$"
 TPuntos db "Grafica: Puntuaciones       ","$"
+TBA db "Ordenamiento Burbuja Asc.   ","$"
+TBD db "Ordenamiento Burbuja Desc.  ","$"
 TVelocidad db "Velocidad: ","$"
 NoUsuarios db "No hay ningun usuario registrado. Presione cualquier tecla para continuar.",0ah,0dh,"$"
 columnas_puntos db "    Usuario		Nivel		Puntos","$"
+columnas_tiempo db "    Usuario		Nivel		Tiempo","$"
 ;********************** SEGMENTO DE CODIGO *********************** 
 .code
 
@@ -203,7 +215,8 @@ TOP_PUNTOS:
     print salto
     print salto
     DuplicarUsuarios
-    ImprimirPuntuaciones
+    ImprimirPuntuaciones   
+    ObtenerPuntuaciones
     print salto
     print PresioneBarra
     LeerBarra:
@@ -211,6 +224,23 @@ TOP_PUNTOS:
     cmp al,20h ;Barra Espaciadora
     je ElegirOrdenamiento
     jmp LeerBarra
+
+TOP_TIEMPO:
+    Clear_Screen
+    print titulo_tiempo
+    print salto
+    print salto
+    DuplicarUsuarios
+    ImprimirTiempos
+    ObtenerTiempos
+    print salto
+    print PresioneBarra
+    LeerBarra2:
+    getCharSE
+    cmp al,20h ;Barra Espaciadora
+    je ElegirOrdenamiento
+    jmp LeerBarra2
+
 
 ElegirOrdenamiento:
     Clear_Screen
@@ -241,16 +271,20 @@ ElegirOrdenamiento:
 
 BurbujaAscendente:
     SetearVelocidad
-    InicioVideo 
-    ObtenerPuntuaciones
-    GraficarArreglo Punteos, TPuntos   
+    InicioVideo  
+    GraficarArreglo Valores, TPuntos   
+    PausaSalir
+    BurbujaAsc Valores, TBA
     PausaSalir
     RegresarATexto
     jmp SesionAdmin
 
 BurbujaDescendente:
     SetearVelocidad
-    InicioVideo
+    InicioVideo 
+    GraficarArreglo Valores, TPuntos   
+    PausaSalir
+    BurbujaDec Valores, TBD
     PausaSalir
     RegresarATexto
     jmp SesionAdmin
@@ -284,8 +318,6 @@ ShellDescendente:
     jmp SesionAdmin
 
 
-TOP_TIEMPO:
-    jmp SesionAdmin
 
 IngresoUsuario:
 	LoggearUsuario

@@ -610,64 +610,78 @@ endm
 ;%%%%%%%%%%%%%%%%%%%%%%%%%% ORDENAMIENTO BURBUJA ASC %%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-BurbujaAsc macro buffer
+BurbujaAsc macro buffer, cadena
 LOCAL PrimerFor, SegundoFor, Intercambio,NoIntercambio
-mov intcont, SIZEOF buffer
-dec intCont
-mov cx, intCont
+mov cx, TotalUsuarios
+mov Contador3,cx
+dec Contador3
 PrimerFor:
+GraficarArreglo buffer, cadena
 mov si,0
 mov di,1
-mov bx,cx
-mov cx,intCont
+mov cx, TotalUsuarios
+mov Contador4,cx
+dec Contador4
 SegundoFor:
-mov ax,buffer[si]
-mov dx,buffer[di]
-cmp ax,dx
+mov al,buffer[si]
+mov dl,buffer[di]
+cmp al,dl
 ja Intercambio
 jmp NoIntercambio
 Intercambio:
-mov intAux,ax
-mov ax,dx
-mov dx,intAux
+mov buffer[si],dl
+mov buffer[di],al
 NoIntercambio:
 inc si
 inc di
-Loop SegundoFor
-mov cx,bx 
-Loop PrimerFor
+dec Contador4
+mov cx,Contador4
+cmp cx,0
+ja SegundoFor
+dec Contador3
+mov cx,Contador3
+cmp cx,0
+ja PrimerFor
+GraficarArreglo buffer, cadena
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%% ORDENAMIENTO BURBUJA DEC %%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-BurbujaDec macro buffer
+BurbujaDec macro buffer, cadena
 LOCAL PrimerFor, SegundoFor, Intercambio,NoIntercambio
-mov intcont, SIZEOF buffer
-dec intCont
-mov cx, intCont
+mov cx, TotalUsuarios
+mov Contador3,cx
+dec Contador3
 PrimerFor:
+GraficarArreglo buffer, cadena
 mov si,0
 mov di,1
-mov bx,cx
-mov cx,intCont
+mov cx, TotalUsuarios
+mov Contador4,cx
+dec Contador4
 SegundoFor:
-mov ax,buffer[si]
-mov dx,buffer[di]
-cmp ax,dx
+mov al,buffer[si]
+mov dl,buffer[di]
+cmp al,dl
 jb Intercambio
 jmp NoIntercambio
 Intercambio:
-mov intAux,ax
-mov ax,dx
-mov dx,intAux
+mov buffer[si],dl
+mov buffer[di],al
 NoIntercambio:
 inc si
 inc di
-Loop SegundoFor
-mov cx,bx 
-Loop PrimerFor
+dec Contador4
+mov cx,Contador4
+cmp cx,0
+ja SegundoFor
+dec Contador3
+mov cx,Contador3
+cmp cx,0
+ja PrimerFor
+GraficarArreglo buffer, cadena
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -748,6 +762,7 @@ SumarColumna:
 Sumar:
 	mov bx,UsuarioAux
 	inc [bx].Usuario.Punteo
+	inc [bx].Usuario.Tiempo
 	PintarCarro 0d
 	mov ax,ColumnaCarro
 	add ax,5
@@ -781,13 +796,33 @@ xor si,si
 mov bx, offset Usuarios
 SeguirCopiando:
 mov al,[bx].Usuario.Punteo
-mov Punteos[si],al
+mov Valores[si],al
 add bx,SIZEOF Usuario
 inc dx
 inc si
 cmp dx,TotalUsuarios
 jbe SeguirCopiando
 endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%% OBTENER TIEMPOS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ObtenerTiempos macro
+LOCAL SeguirCopiando
+xor dx,dx
+xor si,si
+mov bx, offset Usuarios
+SeguirCopiando:
+mov al,[bx].Usuario.Tiempo
+mov Valores[si],al
+add bx,SIZEOF Usuario
+inc dx
+inc si
+cmp dx,TotalUsuarios
+jbe SeguirCopiando
+endm
+
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%% CONVERTIR A ASCII PARA ESCRIBIR EN ARCHIVO %%%%%%%%%%%%%%%%%%
@@ -817,7 +852,7 @@ endm
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ImprimirPuntuaciones macro
-LOCAL Imprimir, SeguirCopiando, OrdenarAntes, SeguirImpresion, SegundaValidacion
+LOCAL Imprimir, SeguirCopiando, OrdenarAntes, SeguirImpresion, SegundaValidacion, SeguirImprimiendo, SalirImp
 mov dx,TotalUsuarios
 cmp dx,0
 ja Imprimir
@@ -831,7 +866,7 @@ ja OrdenarAntes
 xor dx,dx
 mov bx,offset UsuariosAux
 mov dl,[bx].Usuario.Punteo
-mov PuntajeMax,dx
+mov ValorMax,dx
 jmp SeguirImpresion
 OrdenarAntes:
 OrdenarUsuariosPunteo
@@ -879,6 +914,75 @@ jbe SeguirImprimiendo
 SalirImp:
 ReportePuntos
 endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%$ IMPRIMIR TIEMPOS %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ImprimirTiempos macro
+LOCAL Imprimir, SeguirCopiando, OrdenarAntes, SeguirImpresion, SegundaValidacion, SeguirImprimiendo, SalirImp
+mov dx,TotalUsuarios
+cmp dx,0
+ja Imprimir
+print NoUsuarios
+getCharSE
+jmp SesionAdmin
+Imprimir:
+mov dx,TotalUsuarios
+cmp dx,1
+ja OrdenarAntes
+xor dx,dx
+mov bx,offset UsuariosAux
+mov dl,[bx].Usuario.Tiempo
+mov ValorMax,dx
+jmp SeguirImpresion
+OrdenarAntes:
+OrdenarUsuariosTiempo
+SeguirImpresion:
+print columnas_tiempo
+print salto
+mov intCont,1
+mov bx,offset UsuariosAux
+mov OFFSETAux,bx
+print salto
+SeguirImprimiendo:
+DecToPrint intCont
+print espacio
+print NumPrint
+print punto
+print espacio
+mov bx,OFFSETAux
+CopiarArreglo [bx].Usuario.Username, IDAux, 0, 10
+print IDAux
+print tabulacion
+print tabulacion
+xor ax,ax
+mov al,[bx].Usuario.Nivel
+mov NumeroAux,ax
+DecToPrint NumeroAux
+print NumPrint
+print tabulacion
+print tabulacion
+xor ax,ax
+mov al,[bx].Usuario.Tiempo
+mov NumeroAux,ax
+DecToPrint NumeroAux
+print NumPrint
+print salto
+add bx,SIZEOF Usuario
+mov OFFSETAux,bx
+inc intCont
+mov cx,intCont
+cmp cx,TotalUsuarios
+jbe SegundaValidacion
+jmp SalirImp
+SegundaValidacion:
+cmp cx,10
+jbe SeguirImprimiendo
+SalirImp:
+ReporteTiempo
+endm
+
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%% NUMERO RANDOM (0,LimiteSuperior) %%%%%%%%%%%%%%%%%%%%%%%
@@ -929,7 +1033,7 @@ jbe SeguirDuplicando
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-;%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ORDENAMIENTO USUARIOS %%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%% ORDENAMIENTO USUARIOS  PUNTOS %%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 OrdenarUsuariosPunteo macro
@@ -1036,7 +1140,118 @@ ja PrimerFor
 xor dx,dx
 mov bx,offset UsuariosAux
 mov dl,[bx].Usuario.Punteo
-mov PuntajeMax,dx
+mov ValorMax,dx
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%% ORDENAMIENTO USUARIOS TIEMPO %%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+OrdenarUsuariosTiempo macro
+LOCAL PrimerFor, SegundoFor, Intercambio,NoIntercambio, Copiar, Copiar2, Copiar3, Copiar4, Copiar5, Copiar6
+xor ax,ax
+xor dx,dx
+mov cx, TotalUsuarios
+mov Contador1,cx
+dec Contador1
+PrimerFor:
+mov di,offset UsuariosAux ;(j)
+mov si,offset UsuariosAux
+add si,SIZEOF Usuario    ; (j+1)
+mov cx, TotalUsuarios
+mov Contador2,cx
+dec Contador2
+SegundoFor:
+mov al,[di].Usuario.Tiempo 
+mov dl,[si].Usuario.Tiempo
+cmp al,dl
+jb Intercambio
+jmp NoIntercambio
+Intercambio:
+	; aux = arreglo[j] 
+	mov OFFSETAux,si ; guardamos Temporalmente el (offset) 
+	mov si,offset UAuxiliar ; si se convierte en el apuntador al Usuario Auxiliar
+	xor bx,bx
+	Copiar:
+		mov al,[di].Usuario.Username[bx]
+		mov [si].Usuario.Username[bx],al
+		inc bx
+		cmp bx,10
+		jb Copiar
+	xor bx,bx
+	Copiar2:
+		mov al,[di].Usuario.Password[bx]
+		mov [si].Usuario.Password[bx],al
+		inc bx
+		cmp bx,10
+		jb Copiar2
+	mov al,[di].Usuario.Punteo
+	mov [si].Usuario.Punteo,al
+	mov al,[di].Usuario.Tiempo
+	mov [si].Usuario.Tiempo ,al
+	mov al,[di].Usuario.Nivel
+	mov [si].Usuario.Nivel,al
+	mov si, OFFSETAux ;Regresamos el offset (j+1) original a si
+	; aux[j] = arreglo[j+1] 
+	xor bx,bx
+	Copiar3:
+		mov al,[si].Usuario.Username[bx]
+		mov [di].Usuario.Username[bx],al
+		inc bx
+		cmp bx,10
+		jb Copiar3
+	xor bx,bx
+	Copiar4:
+		mov al,[si].Usuario.Password[bx]
+		mov [di].Usuario.Password[bx],al
+		inc bx
+		cmp bx,10
+		jb Copiar4
+	mov al,[si].Usuario.Punteo
+	mov [di].Usuario.Punteo,al
+	mov al,[si].Usuario.Tiempo
+	mov [di].Usuario.Tiempo ,al
+	mov al,[si].Usuario.Nivel
+	mov [di].Usuario.Nivel,al
+	; aux[j+1] = aux 
+	mov OFFSETAux,di ; guardamos Temporalmente el (offset) 
+	mov di,offset UAuxiliar ; di se convierte en el apuntador al Usuario Auxiliar
+	xor bx,bx
+	Copiar5:
+		mov al,[di].Usuario.Username[bx]
+		mov [si].Usuario.Username[bx],al
+		inc bx
+		cmp bx,10
+		jb Copiar5
+	xor bx,bx
+	Copiar6:
+		mov al,[di].Usuario.Password[bx]
+		mov [si].Usuario.Password[bx],al
+		inc bx
+		cmp bx,10
+	jb Copiar6
+	mov al,[di].Usuario.Punteo
+	mov [si].Usuario.Punteo,al
+	mov al,[di].Usuario.Tiempo
+	mov [si].Usuario.Tiempo ,al
+	mov al,[di].Usuario.Nivel
+	mov [si].Usuario.Nivel,al
+	mov di, OFFSETAux ;Regresamos el offset (j) original a di
+NoIntercambio:
+add di,SIZEOF Usuario
+add si,SIZEOF Usuario
+dec Contador2
+mov cx,Contador2
+cmp cx,0
+ja SegundoFor
+dec Contador1
+mov cx,Contador1
+cmp cx,0
+ja PrimerFor
+xor dx,dx
+mov bx,offset UsuariosAux
+mov dl,[bx].Usuario.Tiempo
+mov ValorMax,dx
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1044,7 +1259,7 @@ endm
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ReportePuntos macro
-LOCAL SeguirImprimiendo, SegundaValidacion, SalirRPuntos, Copiar, OrdenarAntes
+LOCAL SeguirImprimiendo, SegundaValidacion, SalirRPuntos
 	CrearArchivo bufferPuntos, handlerPuntos
 	EscribirArchivo handlerPuntos, EncabezadoReporte, SIZEOF EncabezadoReporte
 	EscribirArchivo handlerPuntos, TReporte, SIZEOF TReporte
@@ -1098,6 +1313,69 @@ LOCAL SeguirImprimiendo, SegundaValidacion, SalirRPuntos, Copiar, OrdenarAntes
 	SalirRPuntos:
 	CerrarArchivo handlerPuntos
 endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CREAR REPORTE TIEMPO %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ReporteTiempo macro
+LOCAL SeguirImprimiendo, SegundaValidacion, SalirRTiempo
+	CrearArchivo bufferTiempo, handlerTiempo
+	EscribirArchivo handlerTiempo, EncabezadoReporte, SIZEOF EncabezadoReporte
+	EscribirArchivo handlerTiempo, TReporte, SIZEOF TReporte
+	EscribirArchivo handlerTiempo, R_TTiempo, SIZEOF R_TTiempo
+	EscribirArchivo handlerTiempo, Rcolumnas_tiempo, SIZEOF Rcolumnas_tiempo
+	mov intCont,1
+	mov bx,offset UsuariosAux
+	mov OFFSETAux,bx
+	SeguirImprimiendo:
+		DecToFile intCont
+		EscribirArchivo handlerTiempo, REspacio, SIZEOF REspacio
+		getSize Num, 00h, SIZEOF Num
+		mov StringSize,si
+		EscribirArchivo handlerTiempo, Num, StringSize
+		EscribirArchivo handlerTiempo, RPunto, SIZEOF RPunto
+		EscribirArchivo handlerTiempo, REspacio, SIZEOF REspacio
+		mov bx,OFFSETAux
+		CopiarArreglo [bx].Usuario.Username, IDAux, 0, 10
+	 	Reemplazar IDAux, 24h,20h,0, SIZEOF IDAux
+		EscribirArchivo handlerTiempo, IDAux, SIZEOF IDAux
+		EscribirArchivo handlerTiempo, RTabulacion, SIZEOF RTabulacion
+		mov bx,OFFSETAux
+		xor ax,ax
+		mov al,[bx].Usuario.Nivel
+		mov NumeroAux,ax
+		DecToFile NumeroAux
+		getSize Num, 00h, SIZEOF Num
+		mov StringSize,si
+		EscribirArchivo handlerTiempo, Num, StringSize
+		EscribirArchivo handlerTiempo, RTabulacion, SIZEOF RTabulacion
+		mov bx,OFFSETAux
+		xor ax,ax
+		mov al,[bx].Usuario.Tiempo
+		mov NumeroAux,ax
+		DecToFile NumeroAux
+		getSize Num, 00h, SIZEOF Num
+		mov StringSize,si
+		EscribirArchivo handlerTiempo, Num, StringSize
+		EscribirArchivo handlerTiempo, RSalto, SIZEOF RSalto
+	mov bx,OFFSETAux	
+	add bx,SIZEOF Usuario
+	mov OFFSETAux,bx
+	inc intCont
+	mov cx,intCont
+	cmp cx,TotalUsuarios
+	jbe SegundaValidacion
+	jmp SalirRTiempo
+	SegundaValidacion:
+	cmp cx,10
+	jbe SeguirImprimiendo
+	SalirRTiempo:
+	CerrarArchivo handlerTiempo
+endm
+
+
+
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SETEAR VELOCIDAD %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1259,7 +1537,7 @@ mov ax,Puntaje
 mov bx,AlturaMax
 mul bx
 xor dx,dx
-mov bx,PuntajeMax
+mov bx,ValorMax
 div bx
 mov AlturaAux,ax
 endm
@@ -1340,6 +1618,17 @@ endm
 
 PintarNumeros macro buffer
 LOCAL SeguirImpresion
+mov dl, 1; Column
+mov dh, 23 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+mov ah, 09h
+mov al, SPVar 
+mov bh, 00h
+mov bh, 0d
+mov cx, 38d
+int 10h
 xor dx,dx
 mov ax,AnchoBarra
 mov bx,8d
@@ -1385,9 +1674,15 @@ endm
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 GraficarArreglo macro buffer, cadena
-LOCAL InicioGrafica, PrimerFor, SegundoFor
+LOCAL InicioGrafica, PrimerFor, SegundoFor, SeguirGraficando
 SetearDelay
 SetearAncho
+PintarFondo 0d
+mov dl, 0; Column
+mov dh, 0 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
 InicioGrafica:
 print cadena
 print TVelocidad
@@ -1424,7 +1719,7 @@ Sonido HzAux
 Delay ValorDelay
 mov ax,InicioBarra
 mov bx,AnchoBarra
-add ax,bx ;Sumamos el ancho de la barra graficada anteriormente
+add ax,bx ;Sumamos el ancho de barra
 add ax,5 ;Sumamos 5 pixeles para separar la siguiente barra
 mov InicioBarra,ax
 inc Contador1
