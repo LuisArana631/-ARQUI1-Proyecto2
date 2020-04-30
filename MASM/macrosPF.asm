@@ -1727,3 +1727,214 @@ mov dx,Contador1
 cmp dx,TotalUsuarios
 jb SeguirGraficando
 endm
+
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% QUICKSORT  ASC. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+QuickSortAsc macro buffer, cadena
+LOCAL Do1, Do2, Do3, Verificar1, Verificar2, Incrementar, Decrementar, SegundoIF, FinSegundoIF, VDo2, VDo3, Pushear, Igualar, Cambio
+mov subArray,0
+mov dx,0
+mov cx,TotalUsuarios
+dec cx
+push dx ;izquierda
+push cx ;derecha
+Do1:
+	pop cx
+	pop dx
+	mov right,cx
+	mov left,dx
+	dec subArray
+	Do2:
+		mov dx,left
+		mov _left,dx
+		mov dx,right
+		mov _right,dx
+		mov ax,left
+		mov cx,right
+		add ax,cx
+		mov bx,2
+		xor dx,dx
+		div bx
+		mov si,ax
+		mov al,buffer[si]
+		mov pivot,al
+		Do3:
+			jmp Verificar1
+			Decrementar:
+				dec _right
+			Verificar1:
+				mov al,pivot
+				mov si,_right
+				mov dl,buffer[si]
+				cmp al,dl
+				jl Decrementar
+				jmp Verificar2
+			Incrementar:
+				inc _left
+			Verificar2:
+				mov al,pivot
+				mov si,_left
+				mov dl,buffer[si]
+				cmp al,dl
+				jg Incrementar
+			;PrimerIF:
+				mov ax,_left
+				mov dx,_right
+				cmp ax,dx
+				jle SegundoIF
+				jmp VDo3
+			SegundoIF:
+				cmp ax,dx
+				jne Cambio
+				jmp FinSegundoIF
+				Cambio:
+				mov si,_left
+				mov di,_right
+				mov al,buffer[si]
+				mov dl,buffer[di]
+				mov buffer[si],dl
+				mov buffer[di],al
+				FinSegundoIF:
+				dec _right
+				inc _left
+			VDo3:
+				mov ax,_right
+				mov dx,_left
+				cmp ax,dx
+				jae Do3
+	
+	;TercerIF:
+	mov ax,_left
+	mov dx,right
+	cmp ax,dx
+	jl Pushear
+	jmp Igualar
+	Pushear:
+	inc subArray
+	mov dx,	_left
+	mov cx, right
+	push dx
+	push cx
+	Igualar:
+	mov ax,_right
+	mov right,ax
+	VDo2:
+		mov ax,left
+		mov dx,right
+		cmp ax,dx
+		jl Do2
+;VDo1
+GraficarArreglo buffer, cadena
+mov ax,subArray
+mov dx,1111111111111111b
+cmp ax,dx
+jg Do1
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% QUICKSORT DESC. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+QuickSortDesc macro buffer, cadena
+LOCAL Do1, Do2, Do3, Verificar1, Verificar2, Incrementar, Decrementar, SegundoIF, FinSegundoIF, VDo2, VDo3, Pushear, Igualar, Cambio
+mov subArray,0
+mov dx,0
+mov cx,TotalUsuarios
+dec cx
+push dx ;izquierda
+push cx ;derecha
+Do1:
+	pop cx
+	pop dx
+	mov right,cx
+	mov left,dx
+	dec subArray
+	Do2:
+		mov dx,left
+		mov _left,dx
+		mov dx,right
+		mov _right,dx
+		mov ax,left
+		mov cx,right
+		add ax,cx
+		mov bx,2
+		xor dx,dx
+		div bx
+		mov si,ax
+		mov al,buffer[si]
+		mov pivot,al
+		Do3:
+			jmp Verificar1
+			Decrementar:
+				dec _right
+			Verificar1:
+				mov al,pivot
+				mov si,_right
+				mov dl,buffer[si]
+				cmp al,dl
+				jg Decrementar
+				jmp Verificar2
+			Incrementar:
+				inc _left
+			Verificar2:
+				mov al,pivot
+				mov si,_left
+				mov dl,buffer[si]
+				cmp al,dl
+				jl Incrementar
+			;PrimerIF:
+				mov ax,_left
+				mov dx,_right
+				cmp ax,dx
+				jle SegundoIF
+				jmp VDo3
+			SegundoIF:
+				cmp ax,dx
+				jne Cambio
+				jmp FinSegundoIF
+				Cambio:
+				mov si,_left
+				mov di,_right
+				mov al,buffer[si]
+				mov dl,buffer[di]
+				mov buffer[si],dl
+				mov buffer[di],al
+				FinSegundoIF:
+				dec _right
+				inc _left
+			VDo3:
+				mov ax,_right
+				mov dx,_left
+				cmp ax,dx
+				jae Do3
+	
+	;TercerIF:
+	mov ax,_left
+	mov dx,right
+	cmp ax,dx
+	jl Pushear
+	jmp Igualar
+	Pushear:
+	inc subArray
+	mov dx,	_left
+	mov cx, right
+	push dx
+	push cx
+	Igualar:
+	mov ax,_right
+	mov right,ax
+	VDo2:
+		mov ax,left
+		mov dx,right
+		cmp ax,dx
+		jl Do2
+;VDo1
+GraficarArreglo buffer, cadena
+mov ax,subArray
+mov dx,1111111111111111b
+cmp ax,dx
+jg Do1
+endm
