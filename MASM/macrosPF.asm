@@ -1618,6 +1618,17 @@ endm
 
 PintarNumeros macro buffer
 LOCAL SeguirImpresion
+mov dl, 0; Column
+mov dh, 22 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+mov ah, 09h
+mov al, SPVar 
+mov bh, 00h
+mov bh, 0d
+mov cx, 40d
+int 10h
 mov dl, 1; Column
 mov dh, 23 ; Row
 mov bx, 0 ; Page number, 0 for graphics modes
@@ -1627,7 +1638,7 @@ mov ah, 09h
 mov al, SPVar 
 mov bh, 00h
 mov bh, 0d
-mov cx, 38d
+mov cx, 39d
 int 10h
 xor dx,dx
 mov ax,AnchoBarra
