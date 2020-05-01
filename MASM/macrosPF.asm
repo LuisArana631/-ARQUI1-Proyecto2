@@ -612,11 +612,13 @@ endm
 
 BurbujaAsc macro buffer, cadena
 LOCAL PrimerFor, SegundoFor, Intercambio,NoIntercambio
+mov Segundos,0
 mov cx, TotalUsuarios
 mov Contador3,cx
 dec Contador3
 PrimerFor:
 GraficarArreglo buffer, cadena
+inc Segundos
 mov si,0
 mov di,1
 mov cx, TotalUsuarios
@@ -646,16 +648,18 @@ GraficarArreglo buffer, cadena
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-;%%%%%%%%%%%%%%%%%%%%%%%%%% ORDENAMIENTO BURBUJA DEC %%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%% ORDENAMIENTO BURBUJA DESC %%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 BurbujaDec macro buffer, cadena
 LOCAL PrimerFor, SegundoFor, Intercambio,NoIntercambio
+mov Segundos,0
 mov cx, TotalUsuarios
 mov Contador3,cx
 dec Contador3
 PrimerFor:
 GraficarArreglo buffer, cadena
+inc Segundos
 mov si,0
 mov di,1
 mov cx, TotalUsuarios
@@ -1503,10 +1507,10 @@ endm
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 SetearDelay macro
-mov ax,1111101000b
+mov ax,1100100000b
 mov bx,Velocidad
 mul bx
-add ax,1111101000b
+add ax,1100100000b
 mov ValorDelay,ax
 endm
 
@@ -1678,7 +1682,32 @@ cmp dx,TotalUsuarios
 jb SeguirImpresion
 endm
 
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PINTAR TIEMPO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+PintarTiempo macro
+LOCAL SeguirImpresion
+mov dl, 0; Column
+mov dh, 1 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+mov ah, 09h
+mov al, SPVar 
+mov bh, 00h
+mov bh, 0d
+mov cx, 40d
+int 10h
+mov dl, 0; Column
+mov dh, 1 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+print GTiempo
+DecToPrint Segundos
+print NumPrint
+endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% GRAFICAR ARREGLO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1700,6 +1729,7 @@ print TVelocidad
 DecToPrint Velocidad
 print NumPrint
 print salto
+PintarTiempo
 PintarNumeros buffer
 PintarMargen 15d
 mov Contador1,0
@@ -1746,6 +1776,7 @@ endm
 
 QuickSortAsc macro buffer, cadena
 LOCAL Do1, Do2, Do3, Verificar1, Verificar2, Incrementar, Decrementar, SegundoIF, FinSegundoIF, VDo2, VDo3, Pushear, Igualar, Cambio
+mov Segundos,0
 mov subArray,0
 mov dx,0
 mov cx,TotalUsuarios
@@ -1839,6 +1870,7 @@ Do1:
 		jl Do2
 ;VDo1
 GraficarArreglo buffer, cadena
+inc Segundos
 mov ax,subArray
 mov dx,1111111111111111b
 cmp ax,dx
@@ -1851,6 +1883,7 @@ endm
 
 QuickSortDesc macro buffer, cadena
 LOCAL Do1, Do2, Do3, Verificar1, Verificar2, Incrementar, Decrementar, SegundoIF, FinSegundoIF, VDo2, VDo3, Pushear, Igualar, Cambio
+mov Segundos,0
 mov subArray,0
 mov dx,0
 mov cx,TotalUsuarios
@@ -1944,6 +1977,7 @@ Do1:
 		jl Do2
 ;VDo1
 GraficarArreglo buffer, cadena
+inc Segundos
 mov ax,subArray
 mov dx,1111111111111111b
 cmp ax,dx
@@ -1956,10 +1990,12 @@ endm
 
 ShellSortAsc macro buffer, cadena
 LOCAL Validacion1, Validacion2, Validacion3, ContinuarShell, FORR, FinFOR, Intercambio, ValidarFor, SegundoIF, SetearCero, SetearMitad
+mov Segundos,0
 mov increment,3
 jmp Validacion1
 ContinuarShell:
 	GraficarArreglo buffer, cadena
+	inc Segundos
 	mov ValorI,0
 	jmp ValidarFor
 	FORR:
@@ -2036,10 +2072,12 @@ endm
 
 ShellSortDesc macro buffer, cadena
 LOCAL Validacion1, Validacion2, Validacion3, ContinuarShell, FORR, FinFOR, Intercambio, ValidarFor, SegundoIF, SetearCero, SetearMitad
+mov Segundos,0
 mov increment,3
 jmp Validacion1
 ContinuarShell:
 	GraficarArreglo buffer, cadena
+	inc Segundos
 	mov ValorI,0
 	jmp ValidarFor
 	FORR:

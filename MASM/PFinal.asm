@@ -147,6 +147,7 @@ espacio db "   ","$"
 tabulacion db "	","$"
 SPVar db " ","$"
 punto db ".","$"
+GTiempo db "Tiempo: ","$"
 TPuntos db "Grafica: Puntuaciones        ","$"
 TBA db "Ordenamiento Burbuja Asc.    ","$"
 TBD db "Ordenamiento Burbuja Desc.   ","$"
@@ -268,6 +269,7 @@ ElegirOrdenamiento:
     print salto
     print salto
     print Tipomenu
+    mov Segundos,0
     VerificarTipo:
 	getCharSE
 	cmp al,31h			;1
