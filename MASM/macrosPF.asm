@@ -1804,7 +1804,7 @@ Do1:
 				mov ax,_right
 				mov dx,_left
 				cmp ax,dx
-				jae Do3
+				jge Do3
 	
 	;TercerIF:
 	mov ax,_left
@@ -1909,7 +1909,7 @@ Do1:
 				mov ax,_right
 				mov dx,_left
 				cmp ax,dx
-				jae Do3
+				jge Do3
 	
 	;TercerIF:
 	mov ax,_left
