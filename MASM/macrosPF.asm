@@ -1938,3 +1938,163 @@ mov dx,1111111111111111b
 cmp ax,dx
 jg Do1
 endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SHELLSORT ASC. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ShellSortAsc macro buffer, cadena
+LOCAL Validacion1, Validacion2, Validacion3, ContinuarShell, FORR, FinFOR, Intercambio, ValidarFor, SegundoIF, SetearCero, SetearMitad
+mov increment,3
+jmp Validacion1
+ContinuarShell:
+	GraficarArreglo buffer, cadena
+	mov ValorI,0
+	jmp ValidarFor
+	FORR:
+		mov ax,ValorI
+		mov ValorJ,ax
+		mov si,ValorI
+		mov cl,buffer[si]
+		mov temp,cl
+		jmp Validacion2
+		Intercambio:
+			mov ax,ValorJ
+			mov dx,increment
+			sub ax,dx
+			mov si,ax
+			mov di,ValorJ
+			mov al,buffer[si]
+			mov buffer[di],al
+			mov ValorJ,si
+		Validacion2:
+		mov ax,ValorJ
+		mov dx,increment
+		cmp ax,dx
+		jge Validacion3
+		jmp FinFOR
+		Validacion3:
+		mov ax,ValorJ
+		mov dx,increment
+		sub ax,dx
+		mov si,ax
+		mov cl,buffer[si]
+		mov dl,temp
+		cmp cl,dl
+		jg Intercambio
+		FinFOR:
+		mov si,ValorJ
+		mov al,temp
+		mov buffer[si],al
+	inc ValorI
+	ValidarFor:
+	mov ax,ValorI
+	mov dx,TotalUsuarios
+	cmp ax,dx
+	jl FORR
+
+;IF
+mov ax,increment
+xor dx,dx
+mov bx,2
+div bx
+cmp ax,0
+jne SetearMitad
+jmp SegundoIF
+SetearMitad:
+mov increment,ax
+jmp Validacion1
+SegundoIF:
+mov ax,increment
+cmp ax,1
+je SetearCero
+mov increment,1
+jmp Validacion1
+SetearCero:
+mov increment,0
+Validacion1:
+	mov ax,increment
+	cmp ax,0
+	jg ContinuarShell
+GraficarArreglo buffer, cadena
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SHELLSORT DESC. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ShellSortDesc macro buffer, cadena
+LOCAL Validacion1, Validacion2, Validacion3, ContinuarShell, FORR, FinFOR, Intercambio, ValidarFor, SegundoIF, SetearCero, SetearMitad
+mov increment,3
+jmp Validacion1
+ContinuarShell:
+	GraficarArreglo buffer, cadena
+	mov ValorI,0
+	jmp ValidarFor
+	FORR:
+		mov ax,ValorI
+		mov ValorJ,ax
+		mov si,ValorI
+		mov cl,buffer[si]
+		mov temp,cl
+		jmp Validacion2
+		Intercambio:
+			mov ax,ValorJ
+			mov dx,increment
+			sub ax,dx
+			mov si,ax
+			mov di,ValorJ
+			mov al,buffer[si]
+			mov buffer[di],al
+			mov ValorJ,si
+		Validacion2:
+		mov ax,ValorJ
+		mov dx,increment
+		cmp ax,dx
+		jge Validacion3
+		jmp FinFOR
+		Validacion3:
+		mov ax,ValorJ
+		mov dx,increment
+		sub ax,dx
+		mov si,ax
+		mov cl,buffer[si]
+		mov dl,temp
+		cmp cl,dl
+		jl Intercambio
+		FinFOR:
+		mov si,ValorJ
+		mov al,temp
+		mov buffer[si],al
+	inc ValorI
+	ValidarFor:
+	mov ax,ValorI
+	mov dx,TotalUsuarios
+	cmp ax,dx
+	jl FORR
+
+;IF
+mov ax,increment
+xor dx,dx
+mov bx,2
+div bx
+cmp ax,0
+jne SetearMitad
+jmp SegundoIF
+SetearMitad:
+mov increment,ax
+jmp Validacion1
+SegundoIF:
+mov ax,increment
+cmp ax,1
+je SetearCero
+mov increment,1
+jmp Validacion1
+SetearCero:
+mov increment,0
+Validacion1:
+	mov ax,increment
+	cmp ax,0
+	jg ContinuarShell
+GraficarArreglo buffer, cadena
+endm

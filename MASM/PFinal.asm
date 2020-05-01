@@ -66,14 +66,19 @@ Contador1 WORD 0
 Contador2 WORD 0
 Contador3 WORD 0
 Contador4 WORD 0
-;-------------------
+;-------VARIABLES QUICKSORT--------
 subArray WORD 0
 right WORD 0
 left WORD 0
 _right WORD 0
 _left WORD 0
 pivot db 0
-;--------------
+;--------VARIABLES SHELLSORT------
+ValorI WORD 0
+ValorJ WORD 0
+increment WORD 0
+temp db 0
+;-------------------------------
 StringSize WORD 0
 Velocidad WORD 0
 Segundos WORD 0
@@ -147,6 +152,8 @@ TBA db "Ordenamiento Burbuja Asc.    ","$"
 TBD db "Ordenamiento Burbuja Desc.   ","$"
 TQA db "Ordenamiento QuickSort Asc.  ","$"
 TQD db "Ordenamiento QuickSort Desc. ","$"
+TSA db "Ordenamiento ShellSort Asc.  ","$"
+TSD db "Ordenamiento ShellSort Desc. ","$"
 TVelocidad db "Velocidad:","$"
 NoUsuarios db "No hay ningun usuario registrado. Presione cualquier tecla para continuar.",0ah,0dh,"$"
 columnas_puntos db "    Usuario		Nivel		Puntos","$"
@@ -322,6 +329,9 @@ QuickDescendente:
 ShellAscendente:
     SetearVelocidad
     InicioVideo
+    GraficarArreglo Valores, TPuntos      
+    PausaSalir
+    ShellSortAsc Valores, TSA
     PausaSalir
     RegresarATexto
     jmp SesionAdmin
@@ -329,6 +339,9 @@ ShellAscendente:
 ShellDescendente:
     SetearVelocidad
     InicioVideo
+    GraficarArreglo Valores, TPuntos      
+    PausaSalir
+    ShellSortDesc Valores, TSD   
     PausaSalir
     RegresarATexto
     jmp SesionAdmin
