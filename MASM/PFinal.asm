@@ -84,17 +84,21 @@ ValorJ WORD 0
 increment WORD 0
 temp db 0
 ;---------VARIABLES JUEGO---------
+
+NivelPrint db 10 dup('$')
 ValorSegundos db 0
 SegundosAux WORD 0
 MinutosAux WORD 0
 PuntajeAux db 0
 TiempoAux db 0
+TiempoMeta WORD 0
+NivelesCompletados WORD 0
 Taux WORD 0
 TOaux WORD 0
 TPaux WORD 0
 PPaux WORD 0
 POaux WORD 0
-CCaux WORD 0
+CCaux db 0
 ;---------------------------------
 NivelGeneral db 1
 ColorCarro db 13d

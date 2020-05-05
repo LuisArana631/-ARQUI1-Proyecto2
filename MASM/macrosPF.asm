@@ -746,6 +746,7 @@ endm
 JuegoSN macro
 LOCAL Reload, SumarColumna, RestarColumna, SalirJuego, Sumar, Restar, CompararValores, ReemplazarP, ReemplazarT, ContinuarExit, Pausa
 mov ColumnaCarro, 10101010b
+mov NivelGeneral,1
 PintarEncabezadoJuego
 mov  ah, 2ch
 int  21h
@@ -776,7 +777,6 @@ SumarColumna:
 
 Sumar:
 	inc PuntajeAux
-	inc TiempoAux
 	PintarEncabezadoJuego
 	PintarCarro 0d
 	mov ax,ColumnaCarro
@@ -2225,6 +2225,7 @@ endm
 AumentarSegundos macro
 LOCAL IncrementarMinutos, SalirAS
 inc TiempoAux
+inc TiempoMeta
 inc SegundosAux
 mov cx,SegundosAux
 cmp cx,60
@@ -2581,9 +2582,10 @@ endm
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 JuegoCN macro
-LOCAL Reload, SumarColumna, RestarColumna, SalirJuego, Sumar, Restar, CompararValores, ReemplazarP, ReemplazarT, ContinuarExit, Pausa
+LOCAL ContinuarER, SiguienteNivel, Copiar, PrepararNivel, Reload, SumarColumna, RestarColumna, SalirJuego, Sumar, Restar, CompararValores, ReemplazarP, ReemplazarT, ContinuarExit, Pausa
 mov ColumnaCarro, 10101010b
-PintarEncabezadoJuego
+mov bx, offset Niveles
+mov NivelAux,bx
 mov  ah, 2ch
 int  21h
 mov ValorSegundos,dh 
@@ -2591,10 +2593,55 @@ mov PuntajeAux,0
 mov SegundosAux,0
 mov MinutosAux,0
 mov TiempoAux,0
+mov NivelesCompletados,0
+mov TiempoMeta,0
+PrepararNivel:
+LimpiarBuffer NivelPrint, SIZEOF NivelPrint, 24h
+mov di,NivelAux
+xor bx,bx
+Copiar:
+	mov al,[di].Level.ID[bx]
+	mov NivelPrint[bx],al
+	inc bx
+	mov cx,SIZEOF NivelPrint
+	cmp bx,cx
+	jb Copiar
+mov dl,[di].Level.ColorC
+mov CCaux,dl
+mov dx,[di].Level.Tiempo
+mov Taux,dx
+mov dx,[di].Level.TiempoO
+mov TOaux,dx
+mov dx,[di].Level.TiempoP
+mov TPaux,dx
+mov dx,[di].Level.PuntosP
+mov PPaux,dx
+mov dx,[di].Level.PuntosO
+mov POaux,dx
+
+PintarEJ
 Reload:
 ValidarSegundo
-PintarEncabezadoJuego
-PintarCarro ColorCarro
+mov dx,TiempoMeta
+mov cx,Taux
+cmp dx,cx
+jge SiguienteNivel
+jmp ContinuarER
+SiguienteNivel:
+	inc NivelesCompletados
+	mov ax,NivelesCompletados
+	mov dx,TotalNiveles
+	cmp ax,dx
+	jge CompararValores
+	mov bx,NivelAux
+	add bx,SIZEOF Level
+	mov NivelAux,bx
+	mov TiempoMeta,0
+	jmp PrepararNivel
+
+ContinuarER:
+PintarEJ
+PintarCarro CCaux
 getCharSE
 	jz Reload
 	cmp al,4dh			;derecha
@@ -2613,8 +2660,7 @@ SumarColumna:
 
 Sumar:
 	inc PuntajeAux
-	inc TiempoAux
-	PintarEncabezadoJuego
+	PintarEJ
 	PintarCarro 0d
 	mov ax,ColumnaCarro
 	add ax,5
@@ -2628,13 +2674,12 @@ RestarColumna:
 	jmp Reload
 
 Restar:
-	PintarEncabezadoJuego
+	PintarEJ
 	PintarCarro 0d
 	mov ax,ColumnaCarro
 	sub ax,5
 	mov ColumnaCarro,ax
 	jmp Reload
-
 
 Pausa:
 mov dl, 0; Column
@@ -2661,7 +2706,6 @@ cmp al,20h			;SPACEBAR
 je CompararValores
 jmp Pausa
 
-
 ReemplazarP:
 mov [bx].Usuario.Punteo,cl
 jmp ContinuarExit
@@ -2683,4 +2727,69 @@ cmp al,cl
 jl ReemplazarT
 
 SalirJuego:
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%% PINTAR ENCABEZADO JUEGO 2 %%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+PintarEJ macro
+LOCAL PintarLinea, ImprimirConCero, ImprimirConCero2, LineaC, ImprimirSegundos
+mov dl, 0; Column
+mov dh, 0 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+mov ah, 09h
+mov al, SPVar 
+mov bh, 00h
+mov bl, 15d
+mov cx, 40d
+int 10h
+mov dl, 0; Column
+mov dh, 0 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+print IDAux
+print tabulacion
+print NivelPrint
+print tabulacion
+print EPuntos
+xor cx,cx
+mov cl,PuntajeAux
+DecToPrint cx
+print NumPrint
+print tabulacion
+
+mov cx, MinutosAux
+cmp cx,9
+jle ImprimirConCero
+DecToPrint MinutosAux
+print NumPrint
+jmp ImprimirSegundos
+ImprimirConCero:
+	print NumCero
+	DecToPrint MinutosAux
+	print NumPrint	
+ImprimirSegundos:
+	print sigDP
+	mov cx,SegundosAux
+	cmp cx,9
+	jle ImprimirConCero2
+	DecToPrint SegundosAux
+	print NumPrint
+	jmp LineaC
+ImprimirConCero2:
+	print NumCero
+	DecToPrint SegundosAux
+	print NumPrint
+LineaC:
+	mov di,3200
+	mov cx,320
+	mov dl,9d
+PintarLinea:
+mov es:[di],dl
+inc di
+Loop PintarLinea
 endm
