@@ -306,6 +306,7 @@ lea dx,buffer
 int 21h
 jc Error_Abrir
 mov handler,ax
+jmp ContinuarLeer
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -362,7 +363,7 @@ endm
 ;%%%%%%%%%%%%%%%%%%%%%%%%%% CONVERTIR ASCII A NUMERO %%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-ConvertirAscii macro numero
+AsciiToNum macro numero
 LOCAL INICIO, FIN
 xor ax,ax
 xor bx,bx
@@ -739,22 +740,25 @@ jbe SegundoFor
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% JUEGO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% JUEGO SIN NIVELES  %%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Juego macro
-LOCAL Reload, SumarColumna, RestarColumna, SalirJuego, Sumar, Restar
+JuegoSN macro
+LOCAL Reload, SumarColumna, RestarColumna, SalirJuego, Sumar, Restar, CompararValores, ReemplazarP, ReemplazarT, ContinuarExit, Pausa
 mov ColumnaCarro, 10101010b
+PintarEncabezadoJuego
+mov PuntajeAux,0
+mov TiempoAux,0
 Reload:
-;PintarFondo 0d
-PintarCarro 10d
+PintarEncabezadoJuego
+PintarCarro ColorCarro
 getCharSE
 	cmp al,4dh			;derecha
 	je SumarColumna
 	cmp al,4bh			;izquierda
     je RestarColumna
     cmp al,1bh			;ESC
-    je SalirJuego
+    je Pausa
 	jmp Reload
 
 SumarColumna:
@@ -764,9 +768,9 @@ SumarColumna:
 	jmp Reload
 
 Sumar:
-	mov bx,UsuarioAux
-	inc [bx].Usuario.Punteo
-	inc [bx].Usuario.Tiempo
+	inc PuntajeAux
+	inc TiempoAux
+	PintarEncabezadoJuego
 	PintarCarro 0d
 	mov ax,ColumnaCarro
 	add ax,5
@@ -780,11 +784,59 @@ RestarColumna:
 	jmp Reload
 
 Restar:
+	PintarEncabezadoJuego
 	PintarCarro 0d
 	mov ax,ColumnaCarro
 	sub ax,5
 	mov ColumnaCarro,ax
 	jmp Reload
+
+
+Pausa:
+mov dl, 0; Column
+mov dh, 0 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+mov ah, 09h
+mov al, SPVar 
+mov bh, 00h
+mov bl, 15d
+mov cx, 40d
+int 10h
+mov dl, 0; Column
+mov dh, 0 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+print titulo_pausa
+getCharSE
+cmp al,1bh			;ESC
+je Reload
+cmp al,20h			;SPACEBAR
+je CompararValores
+jmp Pausa
+
+
+ReemplazarP:
+mov [bx].Usuario.Punteo,cl
+jmp ContinuarExit
+
+ReemplazarT:
+mov [bx].Usuario.Tiempo,cl
+jmp SalirJuego
+
+CompararValores:
+mov bx,UsuarioAux
+mov al,[bx].Usuario.Punteo
+mov cl,PuntajeAux
+cmp al,cl
+jl ReemplazarP
+ContinuarExit:
+mov al,[bx].Usuario.Tiempo
+mov cl,TiempoAux
+cmp al,cl
+jl ReemplazarT
 
 SalirJuego:
 endm
@@ -1633,6 +1685,17 @@ mov bh, 00h
 mov bh, 0d
 mov cx, 40d
 int 10h
+mov dl, 0; Column
+mov dh, 24 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+mov ah, 09h
+mov al, SPVar 
+mov bh, 00h
+mov bh, 0d
+mov cx, 40d
+int 10h
 mov dl, 1; Column
 mov dh, 23 ; Row
 mov bx, 0 ; Page number, 0 for graphics modes
@@ -2146,4 +2209,405 @@ Validacion1:
 	cmp ax,0
 	jg ContinuarShell
 GraficarArreglo buffer, cadena
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%% PINTAR ENCABEZADO JUEGO %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+PintarEncabezadoJuego macro
+LOCAL PintarLinea
+mov dl, 0; Column
+mov dh, 0 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+mov ah, 09h
+mov al, SPVar 
+mov bh, 00h
+mov bl, 15d
+mov cx, 40d
+int 10h
+mov dl, 0; Column
+mov dh, 0 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+print IDAux
+print TNivel
+xor cx,cx
+mov cl,NivelGeneral
+DecToPrint cx
+print NumPrint
+print EPuntos
+xor cx,cx
+mov cl,PuntajeAux
+DecToPrint cx
+print NumPrint
+print ETiempo
+mov di,3200
+mov cx,320
+mov dl,9d
+PintarLinea:
+mov es:[di],dl
+inc di
+Loop PintarLinea
+endm
+
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SETEAR JUEGO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+SetearJuego macro
+LOCAL Linea, Error, FinLinea, CopiarID, CopiarT, CopiarTO, CopiarTP, CopiarPP, CopiarPO, VR, VV, VA, VB, FinSJ
+mov TotalNiveles,0
+mov bx, offset Niveles
+mov NivelAux,bx
+mov si,0
+
+Linea:
+mov al,bufferInformacion[si]
+cmp al,4eh ; N
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,49h ; I
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,56h ; V
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,45h ; E
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,4ch ; L
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,3bh
+jne Error
+inc si
+mov bx,NivelAux
+xor di,di
+CopiarID: ;ID del nivel
+mov al,bufferInformacion[si]
+mov [bx].Level.ID[di],al
+inc si
+inc di
+mov al,bufferInformacion[si]
+cmp al,3bh
+jne CopiarID
+inc si
+mov NumeroAux,si
+LimpiarBuffer bufferAuxiliar, SIZEOF bufferAuxiliar,24h
+mov si,NumeroAux
+xor di,di
+CopiarT: ;Tiempo de duracion del nivel
+mov al,bufferInformacion[si]
+mov bufferAuxiliar[di],al
+inc si
+inc di
+mov al,bufferInformacion[si]
+cmp al,3bh
+jne CopiarT
+mov NumeroAux,si
+AsciiToNum bufferAuxiliar
+mov si,NumeroAux
+mov bx,NivelAux
+mov [bx].Level.Tiempo,ax
+inc si
+mov NumeroAux,si
+LimpiarBuffer bufferAuxiliar, SIZEOF bufferAuxiliar,24h
+mov si,NumeroAux
+xor di,di
+CopiarTO: ;Frecuencia Obstaculos
+mov al,bufferInformacion[si]
+mov bufferAuxiliar[di],al
+inc si
+inc di
+mov al,bufferInformacion[si]
+cmp al,3bh
+jne CopiarTO
+mov NumeroAux,si
+AsciiToNum bufferAuxiliar
+mov si,NumeroAux
+mov bx,NivelAux
+mov [bx].Level.TiempoO,ax
+inc si
+mov NumeroAux,si
+LimpiarBuffer bufferAuxiliar, SIZEOF bufferAuxiliar,24h
+mov si,NumeroAux
+xor di,di
+CopiarTP: ;Frecuencia Premios
+mov al,bufferInformacion[si]
+mov bufferAuxiliar[di],al
+inc si
+inc di
+mov al,bufferInformacion[si]
+cmp al,3bh
+jne CopiarTP
+mov NumeroAux,si
+AsciiToNum bufferAuxiliar
+mov si,NumeroAux
+mov bx,NivelAux
+mov [bx].Level.TiempoP,ax
+inc si
+mov NumeroAux,si
+LimpiarBuffer bufferAuxiliar, SIZEOF bufferAuxiliar,24h
+mov si,NumeroAux
+xor di,di
+CopiarPP: ;Puntos Premios
+mov al,bufferInformacion[si]
+mov bufferAuxiliar[di],al
+inc si
+inc di
+mov al,bufferInformacion[si]
+cmp al,3bh
+jne CopiarPP
+mov NumeroAux,si
+AsciiToNum bufferAuxiliar
+mov si,NumeroAux
+mov bx,NivelAux
+mov [bx].Level.PuntosP,ax
+inc si
+mov NumeroAux,si
+LimpiarBuffer bufferAuxiliar, SIZEOF bufferAuxiliar,24h
+mov si,NumeroAux
+xor di,di
+CopiarPO: ;Puntos Obstaculos
+mov al,bufferInformacion[si]
+mov bufferAuxiliar[di],al
+inc si
+inc di
+mov al,bufferInformacion[si]
+cmp al,3bh
+jne CopiarPO
+mov NumeroAux,si
+AsciiToNum bufferAuxiliar
+mov si,NumeroAux
+mov bx,NivelAux
+mov [bx].Level.PuntosO,ax
+inc si
+mov al,bufferInformacion[si]
+cmp al,72h ; r (rojo)
+je VR
+cmp al,76h ; v (verde)
+je VV
+cmp al,61h ; a (azul) 
+je VA
+cmp al,62h ; b (blanco)
+je VB
+jmp Error
+
+
+VR:
+inc si
+mov al,bufferInformacion[si]
+cmp al,6fh ; o 
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,6ah ; j 
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,6fh ; o 
+jne Error
+mov bx,NivelAux
+mov [bx].Level.ColorC,4d
+jmp FinLinea
+
+VV:
+inc si
+mov al,bufferInformacion[si]
+cmp al,65h ; e 
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,72h ; r 
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,64h ; d 
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,65h ; e 
+jne Error
+mov bx,NivelAux
+mov [bx].Level.ColorC,2d
+jmp FinLinea
+
+VA:
+inc si
+mov al,bufferInformacion[si]
+cmp al,7ah ; z 
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,75h ; u 
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,6ch ; l 
+jne Error
+mov bx,NivelAux
+mov [bx].Level.ColorC,1d
+jmp FinLinea
+
+VB:
+inc si
+mov al,bufferInformacion[si]
+cmp al,6ch ; l 
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,61h ; a
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,6eh ; n
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,63h ; c
+jne Error
+inc si
+mov al,bufferInformacion[si]
+cmp al,6fh ; o
+jne Error
+mov bx,NivelAux
+mov [bx].Level.ColorC,15d
+
+FinLinea:
+inc TotalNiveles
+inc si
+mov cl,bufferInformacion[si]
+cmp cl,24h
+je FinSJ
+cmp cl,0dh
+jne Error
+inc si
+mov cl,bufferInformacion[si]
+cmp cl,0ah
+jne Error
+inc si
+mov bx,NivelAux
+add bx,SIZEOF Level
+mov NivelAux,bx
+jmp Linea
+
+Error:
+mov TotalNiveles,0
+CerrarArchivo handlerEntrada
+jmp Error_Entrada
+
+FinSJ:
+CerrarArchivo handlerEntrada
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% JUEGO CON NIVELES  %%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+JuegoCN macro
+LOCAL Reload, SumarColumna, RestarColumna, SalirJuego, Sumar, Restar, CompararValores, ReemplazarP, ReemplazarT, ContinuarExit, Pausa
+mov ColumnaCarro, 10101010b
+PintarEncabezadoJuego
+mov PuntajeAux,0
+mov TiempoAux,0
+Reload:
+PintarEncabezadoJuego
+PintarCarro ColorCarro
+getCharSE
+	cmp al,4dh			;derecha
+	je SumarColumna
+	cmp al,4bh			;izquierda
+    je RestarColumna
+    cmp al,1bh			;ESC
+    je Pausa
+	jmp Reload
+
+SumarColumna:
+	mov ax, ColumnaCarro
+	cmp ax,300
+	jb Sumar
+	jmp Reload
+
+Sumar:
+	inc PuntajeAux
+	inc TiempoAux
+	PintarEncabezadoJuego
+	PintarCarro 0d
+	mov ax,ColumnaCarro
+	add ax,5
+	mov ColumnaCarro,ax
+	jmp Reload
+
+RestarColumna:
+	mov ax,ColumnaCarro
+	cmp ax,0
+	ja Restar	
+	jmp Reload
+
+Restar:
+	PintarEncabezadoJuego
+	PintarCarro 0d
+	mov ax,ColumnaCarro
+	sub ax,5
+	mov ColumnaCarro,ax
+	jmp Reload
+
+
+Pausa:
+mov dl, 0; Column
+mov dh, 0 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+mov ah, 09h
+mov al, SPVar 
+mov bh, 00h
+mov bl, 15d
+mov cx, 40d
+int 10h
+mov dl, 0; Column
+mov dh, 0 ; Row
+mov bx, 0 ; Page number, 0 for graphics modes
+mov ah, 2h
+int 10h
+print titulo_pausa
+getCharSE
+cmp al,1bh			;ESC
+je Reload
+cmp al,20h			;SPACEBAR
+je CompararValores
+jmp Pausa
+
+
+ReemplazarP:
+mov [bx].Usuario.Punteo,cl
+jmp ContinuarExit
+
+ReemplazarT:
+mov [bx].Usuario.Tiempo,cl
+jmp SalirJuego
+
+CompararValores:
+mov bx,UsuarioAux
+mov al,[bx].Usuario.Punteo
+mov cl,PuntajeAux
+cmp al,cl
+jl ReemplazarP
+ContinuarExit:
+mov al,[bx].Usuario.Tiempo
+mov cl,TiempoAux
+cmp al,cl
+jl ReemplazarT
+
+SalirJuego:
 endm

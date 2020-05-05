@@ -3,6 +3,7 @@
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 include macrosPF.asm	;Archivo con los macros a utilizar
 include Usuario.inc
+include Level.inc
 
 .model small 
 ;********************** SEGMENTO DE PILA ***********************
@@ -29,6 +30,9 @@ TReporte db "REPORTE PROYECTO FINAL",13,10,13,10
 REspacio db "  "
 RPunto db "."
 ;------------------------------------------------------------------
+PUBLIC Niveles
+Niveles	    Level 10 DUP (<>)
+
 PUBLIC Usuarios
 Usuarios	Usuario 20 DUP (<>)
 
@@ -40,21 +44,22 @@ UsuariosAux	Usuario 20 DUP (<>)
 
 ;**************************************************************************
 bufferEntrada db 50 dup('$'),00
-bufferAuxiliar db 50 dup('$'),00
-bufferAuxiliar2 db 50 dup('$'),00
+bufferAuxiliar db 50 dup('$')
 handlerEntrada dw ?
 bufferPuntos db "Puntos.rep",00h
 handlerPuntos dw ?
 bufferTiempo db "Tiempo.rep",00h
 handlerTiempo dw ?
-bufferInformacion db 200 dup('$')
+bufferInformacion db 300 dup('$')
 bufferInfoAux db 200 dup('$')
 bufferFechaHora db 15 dup('$')
 NBytes WORD 0
 IDAux db 10 dup('$')
 IDAuxFile db 10 dup(00h)
 TotalUsuarios WORD 0
+TotalNiveles WORD 0
 OffsetUsuario WORD 0
+NivelAux WORD 0
 UsuarioAux WORD 0
 OFFSETAux WORD 0
 Valores db 25 dup (0)
@@ -78,7 +83,18 @@ ValorI WORD 0
 ValorJ WORD 0
 increment WORD 0
 temp db 0
-;-------------------------------
+;---------VARIABLES JUEGO---------
+PuntajeAux db 0
+TiempoAux db 0
+Taux WORD 0
+TOaux WORD 0
+TPaux WORD 0
+PPaux WORD 0
+POaux WORD 0
+CCaux WORD 0
+;---------------------------------
+NivelGeneral db 1
+ColorCarro db 13d
 StringSize WORD 0
 Velocidad WORD 0
 Segundos WORD 0
@@ -107,6 +123,7 @@ errorCrear db "ERROR AL CREAR EL ARCHIVO!",0ah,0dh,"$"
 errorAbrir db "ERROR AL CARGAR EL ARCHIVO!",0ah,0dh,"$"
 errorCerrar db "ERROR AL CERRAR EL ARCHIVO!",0ah,0dh,"$"
 errorLeer db "ERROR AL LEER EL ARCHIVO!",0ah,0dh,"$"
+errorEntrada db "Archivo de entrada invalido! Presione cualquier tecla para regresar.","$"
 errorEscritura db "ERROR AL ESCRIBIR EL ARCHIVO!",0ah,0dh,"$"
 encabezado db "	UNIVERSIDAD DE SAN CARLOS DE GUATEMALA",0ah,0dh,"	FACULTAD DE INGENIERIA",0ah,0dh,
 				09h,"CIENCIAS Y SISTEMAS",0ah,0dh,"	ARQUITECTURAS DE COMPUTADORES Y ENSAMBLADORES 1",0ah,0dh,
@@ -129,12 +146,15 @@ titulo_puntos db "+++++++++++++++++ REPORTE PUNTOS +++++++++++++++","$"
 titulo_tiempo db "+++++++++++++++++ REPORTE TIEMPO +++++++++++++++","$"
 titulo_tipo db "+++++++++++++++++ TIPO DE ORDENAMIENTO +++++++++++++++","$"
 titulo_velocidad db "+++++++++++++++++ VALOR DE VELOCIDAD +++++++++++++++","$"
+titulo_cargar db "+++++++++++++++++ CARGAR JUEGO +++++++++++++++","$"
+titulo_pausa db "+++++++++++++++ PAUSA ++++++++++++++","$"
 simbolos_mas db "+++++++++++++++++","$"
 bienvenido_titulo db "Bienvenid@ ","$"
 ingrese_usuario db "Ingrese Username: ","$"
 ingrese_pass db "Ingrese Password: ","$"
 ingrese_cargar db "INGRESE RUTA DEL ARCHIVO QUE DESEA CARGAR (EJ: C:\Juego.ply)",0ah,0dh,"$"
 asigTerminada db "  Asignacion exitosa. Presione cualquier tecla para continuar.","$"
+cargTerminada db "  Carga exitosa. Presione cualquier tecla para continuar.","$"
 errorIngreso db "Datos invalidos o usuario inexistente. Presione cualquier tecla para continuar.","$"
 regExitoso db "Registro exitoso! Presione cualquier tecla para continuar.","$"
 PresioneContinuar db "  Presione cualquier tecla para continuar.","$"
@@ -156,6 +176,9 @@ TQD db "Ordenamiento QuickSort Desc. ","$"
 TSA db "Ordenamiento ShellSort Asc.  ","$"
 TSD db "Ordenamiento ShellSort Desc. ","$"
 TVelocidad db "Velocidad:","$"
+TNivel db " Nivel:","$"
+EPuntos db " Puntos:","$"
+ETiempo db " 00:00","$"
 NoUsuarios db "No hay ningun usuario registrado. Presione cualquier tecla para continuar.",0ah,0dh,"$"
 columnas_puntos db "    Usuario		Nivel		Puntos","$"
 columnas_tiempo db "    Usuario		Nivel		Tiempo","$"
@@ -349,7 +372,6 @@ ShellDescendente:
     jmp SesionAdmin
 
 
-
 IngresoUsuario:
 	LoggearUsuario
 	Inicio_Usuario:
@@ -380,12 +402,38 @@ IngresoUsuario:
 
 INICIAR_JUEGO:
 InicioVideo
-Juego
-PausaSalir
+mov cx,TotalNiveles
+cmp cx,0
+jg JuegoConNiveles
+JuegoSN
+RegresarATexto
+jmp Inicio_Usuario
+JuegoConNiveles:
+JuegoCN
 RegresarATexto
 jmp Inicio_Usuario
 
+
+
+
+
 CARGAR_JUEGO:
+Clear_Screen
+print titulo_cargar
+print salto
+print salto
+print ingrese_cargar
+print salto
+print flecha
+LimpiarBuffer bufferEntrada, SIZEOF bufferEntrada,24h
+ObtenerRuta bufferEntrada
+AbrirArchivo bufferEntrada, handlerEntrada
+ContinuarLeer:
+LimpiarBuffer bufferInformacion, SIZEOF bufferInformacion,24h
+LeerArchivo handlerEntrada, bufferInformacion, SIZEOF bufferInformacion
+SetearJuego
+print salto
+print cargTerminada
 getCharSE
 jmp Inicio_Usuario
 
@@ -443,7 +491,7 @@ Error_Abrir:
 	print salto
 	print errorAbrir
 	getCharSE
-	jmp Inicio
+	jmp CARGAR_JUEGO
 
 Error_Leer:
 	print salto
@@ -456,6 +504,13 @@ Error_Cerrar:
 	print errorCerrar
 	getCharSE
 	jmp Inicio
+
+
+Error_Entrada:
+	print salto
+	print errorEntrada
+	getCharSE
+	jmp Inicio_Usuario   
 
 salir:					
 	mov ax,4c00h 		
