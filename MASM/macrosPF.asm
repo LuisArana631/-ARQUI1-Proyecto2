@@ -751,7 +751,7 @@ PintarEncabezadoJuego
 mov  ah, 2ch
 int  21h
 mov ValorSegundos,dh 
-mov PuntajeAux,0
+mov PuntajeAux,3
 mov SegundosAux,0
 mov MinutosAux,0
 mov TiempoAux,0
@@ -759,11 +759,15 @@ Reload:
 ValidarSegundo
 PintarEncabezadoJuego
 PintarCarro ColorCarro
-getCharSE
+;getCharSE
+	mov ah,11h
+	int 16h
 	jz Reload
-	cmp al,4dh			;derecha
+	mov ah,00
+	int 16h
+	cmp ah,4dh			;derecha
 	je SumarColumna
-	cmp al,4bh			;izquierda
+	cmp ah,4bh			;izquierda
     je RestarColumna
     cmp al,1bh			;ESC
     je Pausa
@@ -2582,19 +2586,20 @@ endm
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 JuegoCN macro
-LOCAL ContinuarER, SiguienteNivel, Copiar, PrepararNivel, Reload, SumarColumna, RestarColumna, SalirJuego, Sumar, Restar, CompararValores, ReemplazarP, ReemplazarT, ContinuarExit, Pausa
+LOCAL ContinuarExit2, ReemplazarN, ContinuarER, SiguienteNivel, Copiar, PrepararNivel, Reload, SumarColumna, RestarColumna, SalirJuego, Sumar, Restar, CompararValores, ReemplazarP, ReemplazarT, ContinuarExit, Pausa
 mov ColumnaCarro, 10101010b
 mov bx, offset Niveles
 mov NivelAux,bx
 mov  ah, 2ch
 int  21h
 mov ValorSegundos,dh 
-mov PuntajeAux,0
+mov PuntajeAux,3
 mov SegundosAux,0
 mov MinutosAux,0
 mov TiempoAux,0
 mov NivelesCompletados,0
 mov TiempoMeta,0
+mov ContadorNivel,1
 PrepararNivel:
 LimpiarBuffer NivelPrint, SIZEOF NivelPrint, 24h
 mov di,NivelAux
@@ -2637,16 +2642,21 @@ SiguienteNivel:
 	add bx,SIZEOF Level
 	mov NivelAux,bx
 	mov TiempoMeta,0
+	inc ContadorNivel
 	jmp PrepararNivel
 
 ContinuarER:
 PintarEJ
 PintarCarro CCaux
-getCharSE
+;getCharSE
+	mov ah,11h
+	int 16h
 	jz Reload
-	cmp al,4dh			;derecha
+	mov ah,00
+	int 16h
+	cmp ah,4dh			;derecha
 	je SumarColumna
-	cmp al,4bh			;izquierda
+	cmp ah,4bh			;izquierda
     je RestarColumna
     cmp al,1bh			;ESC
     je Pausa
@@ -2712,6 +2722,10 @@ jmp ContinuarExit
 
 ReemplazarT:
 mov [bx].Usuario.Tiempo,cl
+jmp ContinuarExit2
+
+ReemplazarN:
+mov [bx].Usuario.Nivel,cl
 jmp SalirJuego
 
 CompararValores:
@@ -2725,6 +2739,12 @@ mov al,[bx].Usuario.Tiempo
 mov cl,TiempoAux
 cmp al,cl
 jl ReemplazarT
+ContinuarExit2:
+mov al,[bx].Usuario.Nivel
+mov cl,ContadorNivel
+cmp al,cl
+jl ReemplazarN
+
 
 SalirJuego:
 endm

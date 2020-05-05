@@ -93,6 +93,7 @@ PuntajeAux db 0
 TiempoAux db 0
 TiempoMeta WORD 0
 NivelesCompletados WORD 0
+ContadorNivel db 1
 Taux WORD 0
 TOaux WORD 0
 TPaux WORD 0
