@@ -747,12 +747,19 @@ JuegoSN macro
 LOCAL Reload, SumarColumna, RestarColumna, SalirJuego, Sumar, Restar, CompararValores, ReemplazarP, ReemplazarT, ContinuarExit, Pausa
 mov ColumnaCarro, 10101010b
 PintarEncabezadoJuego
+mov  ah, 2ch
+int  21h
+mov ValorSegundos,dh 
 mov PuntajeAux,0
+mov SegundosAux,0
+mov MinutosAux,0
 mov TiempoAux,0
 Reload:
+ValidarSegundo
 PintarEncabezadoJuego
 PintarCarro ColorCarro
 getCharSE
+	jz Reload
 	cmp al,4dh			;derecha
 	je SumarColumna
 	cmp al,4bh			;izquierda
@@ -2212,11 +2219,45 @@ GraficarArreglo buffer, cadena
 endm
 
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%% AUMENTAR UN SEGUNDO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+AumentarSegundos macro
+LOCAL IncrementarMinutos, SalirAS
+inc TiempoAux
+inc SegundosAux
+mov cx,SegundosAux
+cmp cx,60
+je IncrementarMinutos
+jmp SalirAS
+IncrementarMinutos:
+	inc MinutosAux
+	mov SegundosAux,0
+SalirAS:
+endm
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%% VALIDAR SEGUNDO %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ValidarSegundo macro
+LOCAL SalirVS
+mov  ah, 2ch
+int  21h
+cmp dh,ValorSegundos
+je SalirVS
+mov ValorSegundos,dh
+AumentarSegundos
+SalirVS:
+endm
+
+
+;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%% PINTAR ENCABEZADO JUEGO %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 PintarEncabezadoJuego macro
-LOCAL PintarLinea
+LOCAL PintarLinea, ImprimirConCero, ImprimirConCero2, LineaC, ImprimirSegundos
 mov dl, 0; Column
 mov dh, 0 ; Row
 mov bx, 0 ; Page number, 0 for graphics modes
@@ -2244,10 +2285,35 @@ xor cx,cx
 mov cl,PuntajeAux
 DecToPrint cx
 print NumPrint
-print ETiempo
-mov di,3200
-mov cx,320
-mov dl,9d
+print tabulacion
+
+
+mov cx, MinutosAux
+cmp cx,9
+jle ImprimirConCero
+DecToPrint MinutosAux
+print NumPrint
+jmp ImprimirSegundos
+ImprimirConCero:
+	print NumCero
+	DecToPrint MinutosAux
+	print NumPrint	
+ImprimirSegundos:
+	print sigDP
+	mov cx,SegundosAux
+	cmp cx,9
+	jle ImprimirConCero2
+	DecToPrint SegundosAux
+	print NumPrint
+	jmp LineaC
+ImprimirConCero2:
+	print NumCero
+	DecToPrint SegundosAux
+	print NumPrint
+LineaC:
+	mov di,3200
+	mov cx,320
+	mov dl,9d
 PintarLinea:
 mov es:[di],dl
 inc di
@@ -2518,12 +2584,19 @@ JuegoCN macro
 LOCAL Reload, SumarColumna, RestarColumna, SalirJuego, Sumar, Restar, CompararValores, ReemplazarP, ReemplazarT, ContinuarExit, Pausa
 mov ColumnaCarro, 10101010b
 PintarEncabezadoJuego
+mov  ah, 2ch
+int  21h
+mov ValorSegundos,dh 
 mov PuntajeAux,0
+mov SegundosAux,0
+mov MinutosAux,0
 mov TiempoAux,0
 Reload:
+ValidarSegundo
 PintarEncabezadoJuego
 PintarCarro ColorCarro
 getCharSE
+	jz Reload
 	cmp al,4dh			;derecha
 	je SumarColumna
 	cmp al,4bh			;izquierda

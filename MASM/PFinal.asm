@@ -84,6 +84,9 @@ ValorJ WORD 0
 increment WORD 0
 temp db 0
 ;---------VARIABLES JUEGO---------
+ValorSegundos db 0
+SegundosAux WORD 0
+MinutosAux WORD 0
 PuntajeAux db 0
 TiempoAux db 0
 Taux WORD 0
@@ -179,6 +182,8 @@ TVelocidad db "Velocidad:","$"
 TNivel db " Nivel:","$"
 EPuntos db " Puntos:","$"
 ETiempo db " 00:00","$"
+NumCero db "0","$"
+sigDP db ":","$"
 NoUsuarios db "No hay ningun usuario registrado. Presione cualquier tecla para continuar.",0ah,0dh,"$"
 columnas_puntos db "    Usuario		Nivel		Puntos","$"
 columnas_tiempo db "    Usuario		Nivel		Tiempo","$"
@@ -412,9 +417,6 @@ JuegoConNiveles:
 JuegoCN
 RegresarATexto
 jmp Inicio_Usuario
-
-
-
 
 
 CARGAR_JUEGO:
